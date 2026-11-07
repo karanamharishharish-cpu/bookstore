@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sign in | Pagewise Books</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div id="nav"></div>
+<main>
+<h1>Sign in</h1>
+<div class="two">
+  <section class="panel">
+    <h2>Customer</h2>
+    <p>Sign in with your Gmail account to order books and track your parcels.</p>
+    <div id="gbtn"></div>
+    <div id="demoBox">
+      <form id="demoForm" class="form">
+        <label class="wide">Gmail address<input id="ge" type="email" placeholder="yourname@gmail.com" autocomplete="email" required></label>
+        <button class="btn wide" type="submit">Continue with Gmail</button>
+      </form>
+      <p><small>Demo sign-in. The address is not verified by Google.</small></p>
+    </div>
+  </section>
+  <section class="panel">
+    <h2>Admin</h2>
+    <p>For store staff only.</p>
+    <form id="adminForm" class="form">
+      <label class="wide">Username<input id="au" autocomplete="username" required></label>
+      <label class="wide">Password<input id="ap" type="password" autocomplete="current-password" required></label>
+      <button class="btn wide" type="submit">Sign in as admin</button>
+    </form>
+  </section>
+</div>
+</main>
+<div id="foot"></div>
+<script src="js/data.js"></script>
+<script src="js/login.js"></script>
+<script src="js/assistant.js"></script>
+</body>
+</html>

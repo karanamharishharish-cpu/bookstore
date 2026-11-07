@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Admin | Pagewise Books</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div id="nav"></div>
+<main>
+<h1>Admin</h1>
+<p><button class="ghost" id="reset" type="button">Reset demo data</button></p>
+<form class="panel" id="bookForm">
+  <h2 id="formTitle">Add a book</h2>
+  <input type="hidden" id="bid">
+  <div class="form">
+    <label>Title<input id="title" required></label>
+    <label>Author<input id="author" required></label>
+    <label>Category<select id="cat"></select></label>
+    <label>Price (INR)<input id="price" type="number" min="1" step="1" required></label>
+    <label>Stock<input id="stock" type="number" min="0" step="1" required></label>
+    <label>Cover image link (optional)<input id="img" type="url" placeholder="https://..."></label>
+    <label class="wide">Description<textarea id="desc" rows="2"></textarea></label>
+  </div>
+  <p><button class="btn" type="submit">Save book</button></p>
+</form>
+<section class="panel"><h2>Books</h2><div class="scroll"><table>
+  <thead><tr><th>Title</th><th>Category</th><th>Price</th><th>Stock</th><th>Actions</th></tr></thead><tbody id="books"></tbody></table></div></section>
+<section class="panel"><h2>Orders and tracking</h2><div class="scroll"><table>
+  <thead><tr><th>Order</th><th>Customer</th><th>Total</th><th>Payment</th><th>Status</th></tr></thead><tbody id="orders"></tbody></table></div></section>
+</main>
+<div id="foot"></div>
+<script src="js/data.js"></script>
+<script src="js/admin.js"></script>
+<script src="js/assistant.js"></script>
+</body>
+</html>
