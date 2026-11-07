@@ -6,175 +6,373 @@
     <title>Sign In - Pagewise Books</title>
     <link rel="stylesheet" href="css/style.css">
     <style>
-        /* OTP countdown bar */
-        #otpCountdownBar {
-            display: none;
-            margin: 12px 0 4px;
+        /* ===== FULL PAGE BOOK BACKGROUND ===== */
+        body {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #0a1628 0%, #14213d 45%, #1a0e3a 100%);
+            overflow-x: hidden;
         }
-        #otpCountdownBar .otp-bar-track {
-            height: 8px;
-            background: #d5dbe6;
-            border-radius: 4px;
+
+        #bgCanvas {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 0;
             overflow: hidden;
         }
-        #otpCountdownFill {
-            height: 100%;
-            width: 100%;
-            background: #1f7a4d;
-            border-radius: 4px;
-            transition: width 0.25s linear, background 0.5s;
+
+        .bg-book {
+            position: absolute;
+            bottom: -150px;
+            border-radius: 2px 5px 5px 2px;
+            animation: bookFloat linear infinite;
+            opacity: 0;
         }
-        #otpCountdownBar .otp-bar-label {
+        .bg-book::before {
+            content: '';
+            position: absolute;
+            left: 12%; top: 0;
+            width: 14%; height: 100%;
+            background: rgba(0,0,0,0.25);
+            border-radius: 1px;
+        }
+        .bg-book::after {
+            content: '';
+            position: absolute;
+            left: 15%; top: 18%;
+            width: 65%; height: 8%;
+            background: rgba(255,255,255,0.12);
+            border-radius: 1px;
+        }
+        @keyframes bookFloat {
+            0%   { transform: translateY(0) rotate(0deg);    opacity: 0; }
+            6%   { opacity: 0.2; }
+            88%  { opacity: 0.2; }
+            100% { transform: translateY(-115vh) rotate(14deg); opacity: 0; }
+        }
+
+        .bg-quote {
+            position: absolute;
+            font-family: Georgia, serif;
+            color: rgba(224,165,38,0.1);
+            white-space: nowrap;
+            bottom: -40px;
+            animation: quoteFloat linear infinite;
+            pointer-events: none;
+        }
+        @keyframes quoteFloat {
+            0%   { transform: translateY(0) translateX(0); opacity: 0; }
+            8%   { opacity: 1; }
+            90%  { opacity: 1; }
+            100% { transform: translateY(-108vh) translateX(20px); opacity: 0; }
+        }
+
+        .bg-star {
+            position: absolute;
+            width: 3px; height: 3px;
+            background: rgba(224,165,38,0.4);
+            border-radius: 50%;
+            animation: starPulse ease-in-out infinite;
+        }
+        @keyframes starPulse {
+            0%,100% { opacity: 0.1; transform: scale(1); }
+            50%      { opacity: 0.6; transform: scale(1.5); }
+        }
+
+        /* ===== WRAPPER ===== */
+        .login-wrapper {
+            position: relative;
+            z-index: 1;
+            min-height: 100vh;
             display: flex;
-            justify-content: space-between;
-            font-size: .82rem;
-            color: #5b6678;
-            margin-top: 4px;
+            flex-direction: column;
         }
-        #otpTimeLabel {
-            font-weight: 700;
-            color: #14213d;
+
+        .bar {
+            background: rgba(10,22,40,0.75) !important;
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(255,255,255,0.08);
         }
-        /* Auth layout */
+
+        /* ===== AUTH CONTAINER ===== */
         .auth-container {
-            max-width: 760px;
-            margin: 48px auto;
-            padding: 0 5vw;
+            flex: 1;
+            max-width: 820px;
+            margin: 0 auto;
+            padding: 48px 5vw 72px;
+            width: 100%;
         }
-        .auth-container h2 {
+
+        /* ===== PAGE HEADER ===== */
+        .login-header { text-align: center; margin-bottom: 42px; }
+        .login-logo-line { font-size: 2.8rem; margin-bottom: 6px; }
+        .login-brand {
             font-family: Georgia, "Times New Roman", serif;
-            font-size: 2rem;
-            color: #14213d;
-            margin-bottom: 24px;
+            font-size: 2rem; color: #fff;
+            font-weight: 700; letter-spacing: 1px; display: block;
         }
+        .login-tagline { color: rgba(255,255,255,0.45); font-size: 0.9rem; margin: 2px 0 20px; }
+        .login-title {
+            font-family: Georgia, serif;
+            font-size: 1.3rem; color: #e0a526;
+            font-weight: 400; font-style: italic;
+        }
+        .header-rule {
+            display: flex; align-items: center; gap: 12px;
+            margin: 16px auto 0; max-width: 320px;
+        }
+        .header-rule span {
+            flex: 1; height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(224,165,38,0.4), transparent);
+        }
+        .header-rule i { color: #e0a526; font-style: normal; font-size: 1rem; }
+
+        /* ===== GLASS CARDS ===== */
         .auth-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
             gap: 24px;
         }
         .auth-card {
-            background: #fff;
-            border: 1px solid #d5dbe6;
-            border-radius: 12px;
-            padding: 28px 24px;
+            background: rgba(255,255,255,0.06);
+            backdrop-filter: blur(18px);
+            -webkit-backdrop-filter: blur(18px);
+            border: 1px solid rgba(255,255,255,0.12);
+            border-radius: 18px;
+            padding: 32px 28px;
+            transition: transform 0.25s ease, box-shadow 0.25s ease;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.35);
         }
-        .auth-card h3 {
-            font-family: Georgia, "Times New Roman", serif;
-            margin: 0 0 8px;
-            color: #14213d;
-            font-size: 1.3rem;
+        .auth-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 56px rgba(0,0,0,0.5);
         }
-        .auth-card p {
-            color: #5b6678;
-            margin: 0 0 20px;
-            font-size: .95rem;
+        .card-badge {
+            width: 46px; height: 46px; border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.5rem; margin-bottom: 14px;
         }
+        .badge-customer { background: rgba(31,122,77,0.25);  border: 1px solid rgba(31,122,77,0.4); }
+        .badge-admin    { background: rgba(224,165,38,0.2);  border: 1px solid rgba(224,165,38,0.35); }
+
+        .auth-card h3 { font-family: Georgia, serif; color: #fff; font-size: 1.3rem; margin: 0 0 5px; }
+        .auth-card .card-desc { color: rgba(255,255,255,0.45); font-size: 0.88rem; margin: 0 0 20px; }
+        .card-divider { height: 1px; background: rgba(255,255,255,0.08); margin: 0 0 20px; }
+
+        /* ===== FORM FIELDS ===== */
+        .form-group { margin-bottom: 14px; }
+        .form-group label {
+            display: block; margin-bottom: 6px;
+            font-weight: 600; font-size: 0.8rem;
+            color: rgba(255,255,255,0.65);
+            text-transform: uppercase; letter-spacing: 0.6px;
+        }
+        .auth-card input[type="email"],
+        .auth-card input[type="number"],
+        .auth-card input[type="text"] {
+            width: 100%; padding: 11px 14px;
+            border: 1px solid rgba(255,255,255,0.18);
+            border-radius: 9px;
+            background: rgba(255,255,255,0.08);
+            color: #fff; font: inherit; font-size: 0.95rem;
+            transition: border-color 0.2s, background 0.2s;
+        }
+        .auth-card input::placeholder { color: rgba(255,255,255,0.3); }
+        .auth-card input:focus {
+            outline: none; border-color: #e0a526;
+            background: rgba(255,255,255,0.13);
+        }
+        .auth-card input:-webkit-autofill,
+        .auth-card input:-webkit-autofill:focus {
+            -webkit-box-shadow: 0 0 0 1000px rgba(14,22,45,0.95) inset !important;
+            -webkit-text-fill-color: #fff !important; caret-color: #fff;
+        }
+
+        /* ===== BUTTONS ===== */
         .btn-primary {
-            background: #14213d;
-            color: #fff;
-            border: 0;
-            border-radius: 8px;
-            padding: 10px 20px;
-            font: inherit;
-            font-weight: 600;
-            cursor: pointer;
-            width: 100%;
-            margin-top: 4px;
+            background: linear-gradient(135deg, #e0a526, #c8891a);
+            color: #14213d; border: 0; border-radius: 9px;
+            padding: 12px 20px; font: inherit; font-weight: 700;
+            cursor: pointer; width: 100%; margin-top: 4px;
+            font-size: 0.95rem; letter-spacing: 0.3px;
+            transition: opacity 0.2s, transform 0.1s, box-shadow 0.2s;
+            box-shadow: 0 4px 14px rgba(224,165,38,0.35);
         }
-        .btn-primary:hover { background: #22345f; }
+        .btn-primary:hover  { opacity: 0.92; box-shadow: 0 6px 20px rgba(224,165,38,0.5); }
+        .btn-primary:active { transform: scale(0.98); }
+
         .btn-secondary {
-            background: #2a3b6b;
-            color: #fff;
-            border: 0;
-            border-radius: 8px;
-            padding: 10px 15px;
-            font: inherit;
-            font-weight: 600;
-            cursor: pointer;
+            background: rgba(255,255,255,0.1); color: #fff;
+            border: 1px solid rgba(255,255,255,0.22);
+            border-radius: 9px; padding: 11px 16px;
+            font: inherit; font-weight: 600; cursor: pointer;
+            font-size: 0.9rem; width: 100%;
+            transition: background 0.2s, border-color 0.2s;
         }
-        .btn-secondary:hover { background: #1f2d55; }
-        .btn-secondary:disabled { background: #9aa3b5; cursor: not-allowed; }
+        .btn-secondary:hover    { background: rgba(255,255,255,0.18); border-color: rgba(255,255,255,0.4); }
+        .btn-secondary:disabled { opacity: 0.45; cursor: not-allowed; }
+
+        /* ===== OTP COUNTDOWN BAR ===== */
+        #otpCountdownBar { display: none; margin: 12px 0 6px; }
+        .otp-bar-track { height: 7px; background: rgba(255,255,255,0.12); border-radius: 4px; overflow: hidden; }
+        #otpCountdownFill {
+            height: 100%; width: 100%; background: #1f7a4d; border-radius: 4px;
+            transition: width 0.25s linear, background 0.5s;
+        }
+        .otp-bar-label {
+            display: flex; justify-content: space-between;
+            font-size: .8rem; color: rgba(255,255,255,0.45); margin-top: 4px;
+        }
+        #otpTimeLabel { font-weight: 700; color: #e0a526; }
+
+        /* ===== DEMO OTP FALLBACK BOX ===== */
+        #demoOtpBox {
+            display: none;
+            background: rgba(224,165,38,0.12);
+            border: 1px solid rgba(224,165,38,0.45);
+            border-radius: 10px; padding: 14px 16px;
+            margin-top: 12px; text-align: center;
+        }
+        #demoOtpBox .demo-label {
+            color: #e0a526; font-size: .78rem; font-weight: 600;
+            text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;
+        }
+        #demoOtpBox .demo-warn { color: rgba(255,255,255,0.5); font-size: .75rem; margin: 4px 0 0; }
+        #demoOtpCode {
+            font-size: 2rem; font-weight: 700; letter-spacing: 10px;
+            color: #fff; padding: 4px 0; font-family: monospace;
+        }
+
+        /* OTP input style */
+        #otpInput { letter-spacing: 8px !important; font-size: 1.15rem !important; text-align: center; font-family: monospace !important; }
+
+        footer { color: rgba(255,255,255,0.3) !important; }
     </style>
 </head>
 <body>
-    <div id="nav"></div>
 
-    <div class="auth-container">
-        <h2>Sign in</h2>
+    <!-- Animated book background -->
+    <div id="bgCanvas"></div>
 
-        <div class="auth-grid">
-            <!-- Customer Section -->
-            <div class="auth-card">
-                <h3>Customer</h3>
-                <p>Sign in with your Gmail account to order books and track your parcels.</p>
-                <div id="demoBox">
-                    <form id="demoForm">
-                        <div class="form-group" style="margin-bottom: 15px;">
-                            <label for="ge" style="display:block; margin-bottom:5px; font-weight:600;">Gmail Address</label>
-                            <input type="email" id="ge" name="email" autocomplete="email"
-                                   placeholder="Enter your Gmail" required
-                                   style="width:100%;padding:10px;border:1px solid #ddd;border-radius:4px;">
+    <div class="login-wrapper">
+        <div id="nav"></div>
+
+        <div class="auth-container">
+
+            <!-- Header -->
+            <div class="login-header">
+                <div class="login-logo-line">📚</div>
+                <span class="login-brand">Pagewise Books</span>
+                <p class="login-tagline">Your favourite e-bookstore</p>
+                <p class="login-title">"A reader lives a thousand lives" — sign in to begin yours</p>
+                <div class="header-rule"><span></span><i>✦</i><span></span></div>
+            </div>
+
+            <div class="auth-grid">
+
+                <!-- Customer card -->
+                <div class="auth-card">
+                    <div class="card-badge badge-customer">🛒</div>
+                    <h3>Customer</h3>
+                    <p class="card-desc">Sign in with your Gmail to order books and track your parcels.</p>
+                    <div class="card-divider"></div>
+                    <div id="demoBox">
+                        <form id="demoForm">
+                            <div class="form-group">
+                                <label for="ge">Gmail Address</label>
+                                <input type="email" id="ge" name="email" autocomplete="email" placeholder="you@gmail.com" required>
+                            </div>
+                            <button type="submit" class="btn-primary">Sign in with Gmail</button>
+                        </form>
+                    </div>
+                    <div id="gbtn" style="margin-top:14px;"></div>
+                </div>
+
+                <!-- Admin card -->
+                <div class="auth-card">
+                    <div class="card-badge badge-admin">🔐</div>
+                    <h3>Admin</h3>
+                    <p class="card-desc">For store staff only. Requires captcha + OTP verification.</p>
+                    <div class="card-divider"></div>
+
+                    <form id="adminForm">
+                        <div class="form-group">
+                            <label for="adminEmailInput">Admin Email</label>
+                            <input type="email" id="adminEmailInput" name="adminEmail" placeholder="admin@example.com" required>
                         </div>
-                        <button type="submit" class="btn-primary">Sign in with Gmail</button>
+
+                        <div class="form-group">
+                            <label for="captchaInput" id="captchaQuestion">Solve: </label>
+                            <input type="number" id="captchaInput" name="captcha" placeholder="Answer" required>
+                        </div>
+
+                        <button type="button" id="sendOtpBtn" class="btn-secondary">📨 Send OTP to Email</button>
+
+                        <!-- Demo fallback when Brevo API fails -->
+                        <div id="demoOtpBox">
+                            <div class="demo-label">⚠ Demo Mode — email not configured</div>
+                            <div id="demoOtpCode">------</div>
+                            <div class="demo-warn">Use this OTP to complete login</div>
+                        </div>
+
+                        <!-- OTP section: visible after OTP sent -->
+                        <div id="otpSection" style="display:none; margin-top:16px;">
+                            <div id="otpCountdownBar">
+                                <div class="otp-bar-track">
+                                    <div id="otpCountdownFill"></div>
+                                </div>
+                                <div class="otp-bar-label">
+                                    <span>OTP expires in</span>
+                                    <span id="otpTimeLabel">55s</span>
+                                </div>
+                            </div>
+                            <div class="form-group" style="margin-top:12px;">
+                                <label for="otpInput">Enter OTP</label>
+                                <input type="text" id="otpInput" name="otp" placeholder="• • • • • •" required maxlength="6">
+                            </div>
+                            <button type="submit" class="btn-primary">✔ Verify &amp; Login</button>
+                        </div>
                     </form>
                 </div>
-                <div id="gbtn" style="margin-top: 15px;"></div>
-            </div>
 
-            <!-- Admin Section -->
-            <div class="auth-card">
-                <h3>Admin</h3>
-                <p>For store staff only.</p>
-                <form id="adminForm">
-                    <!-- Admin Email -->
-                    <div class="form-group" style="margin-bottom: 15px;">
-                        <label for="adminEmailInput" style="display:block;margin-bottom:5px;font-weight:600;">Admin Email</label>
-                        <input type="email" id="adminEmailInput" name="adminEmail"
-                               placeholder="Enter admin email" required
-                               style="width:100%;padding:10px;border:1px solid #ddd;border-radius:4px;">
-                    </div>
-
-                    <!-- Math Captcha -->
-                    <div class="form-group" style="margin-bottom: 15px;">
-                        <label for="captchaInput" id="captchaQuestion"
-                               style="display:block;margin-bottom:5px;font-weight:600;">Solve: </label>
-                        <input type="number" id="captchaInput" name="captcha"
-                               placeholder="Result" required
-                               style="width:100%;padding:10px;border:1px solid #ddd;border-radius:4px;">
-                    </div>
-
-                    <!-- Send OTP button -->
-                    <button type="button" id="sendOtpBtn" class="btn-secondary">Send OTP</button>
-
-                    <!-- OTP verification section (hidden until OTP is sent) -->
-                    <div id="otpSection" style="display:none; margin-top:16px;">
-
-                        <!-- Countdown progress bar -->
-                        <div id="otpCountdownBar">
-                            <div class="otp-bar-track">
-                                <div id="otpCountdownFill"></div>
-                            </div>
-                            <div class="otp-bar-label">
-                                <span>OTP expires in</span>
-                                <span id="otpTimeLabel">55s</span>
-                            </div>
-                        </div>
-
-                        <!-- OTP input -->
-                        <div class="form-group" style="margin-bottom:12px; margin-top:8px;">
-                            <label for="otpInput" style="display:block;margin-bottom:5px;font-weight:600;">Enter OTP</label>
-                            <input type="text" id="otpInput" name="otp"
-                                   placeholder="Enter 6-digit OTP" required maxlength="6"
-                                   style="width:100%;padding:10px;border:1px solid #ddd;border-radius:4px;letter-spacing:4px;font-size:1.1rem;">
-                        </div>
-                        <button type="submit" class="btn-primary">Verify &amp; Login</button>
-                    </div>
-                </form>
             </div>
         </div>
+
+        <div id="foot"></div>
     </div>
 
-    <!-- Configuration and Login Logic -->
+    <!-- Background animation -->
+    <script>
+    (function () {
+        const COLORS = ['#7a2e2a','#1f5c58','#2a3b6b','#8a5a12','#4b3a63','#2f6b3a','#6b2a5a','#1a5c7a','#a04020','#204070','#306050'];
+        const QUOTES = ['"A reader lives a thousand lives."','"Books are mirrors of the soul."','"Reading is dreaming with open eyes."','"One book, one pen can change the world."','"Libraries are the wardrobes of literature."','"Not all those who wander are lost."'];
+        const wrap = document.getElementById('bgCanvas');
+        function rand(a,b){return a+Math.random()*(b-a);}
+        function spawnBook(){
+            const el=document.createElement('div'); el.className='bg-book';
+            const w=rand(24,48),h=rand(75,130);
+            el.style.cssText='left:'+rand(0,98)+'%;width:'+w+'px;height:'+h+'px;background:'+COLORS[Math.floor(Math.random()*COLORS.length)]+';animation-duration:'+rand(9,20)+'s;animation-delay:'+rand(0,14)+'s';
+            wrap.appendChild(el); el.addEventListener('animationend',()=>el.remove());
+        }
+        function spawnQuote(){
+            const el=document.createElement('div'); el.className='bg-quote';
+            el.textContent=QUOTES[Math.floor(Math.random()*QUOTES.length)];
+            el.style.cssText='left:'+rand(2,60)+'%;animation-duration:'+rand(20,32)+'s;animation-delay:'+rand(0,18)+'s;font-size:'+rand(0.72,1.05)+'rem';
+            wrap.appendChild(el); el.addEventListener('animationend',()=>el.remove());
+        }
+        function spawnStar(){
+            const el=document.createElement('div'); el.className='bg-star';
+            el.style.cssText='left:'+rand(0,100)+'%;top:'+rand(5,90)+'%;animation-duration:'+rand(2,5)+'s;animation-delay:'+rand(0,4)+'s';
+            wrap.appendChild(el);
+        }
+        for(let i=0;i<15;i++) spawnBook();
+        for(let i=0;i<5;i++)  spawnQuote();
+        for(let i=0;i<40;i++) spawnStar();
+        setInterval(spawnBook,1000); setInterval(spawnQuote,7000);
+    })();
+    </script>
+
     <script src="js/data.js"></script>
     <script src="js/login.js"></script>
 </body>
