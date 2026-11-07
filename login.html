@@ -17,11 +17,14 @@
                 <p>Sign in with your Gmail account to order books and track your parcels.</p>
                 <div id="demoBox">
                     <form id="demoForm">
-                        <input type="email" id="ge" placeholder="Enter your Gmail" required>
+                        <div class="form-group" style="margin-bottom: 15px;">
+                            <label for="ge" style="display:block; margin-bottom:5px; font-weight:600;">Gmail Address</label>
+                            <input type="email" id="ge" name="email" autocomplete="email" placeholder="Enter your Gmail" required style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px;">
+                        </div>
                         <button type="submit" class="btn-primary">Sign in with Gmail</button>
                     </form>
                 </div>
-                <div id="gbtn"></div>
+                <div id="gbtn" style="margin-top: 15px;"></div>
             </div>
 
             <!-- Admin Section -->
@@ -29,24 +32,24 @@
                 <h3>Admin</h3>
                 <p>For store staff only.</p>
                 <form id="adminForm">
-                    <div class="form-group">
-                        <label for="adminEmailInput">Admin Email</label>
-                        <input type="email" id="adminEmailInput" placeholder="Enter admin email" required>
+                    <div class="form-group" style="margin-bottom: 15px;">
+                        <label for="adminEmailInput" style="display:block; margin-bottom:5px; font-weight:600;">Admin Email</label>
+                        <input type="email" id="adminEmailInput" name="admin_email" autocomplete="email" placeholder="Enter admin email" required style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px;">
                     </div>
 
                     <!-- Math Captcha Section -->
-                    <div class="form-group">
-                        <label for="captchaInput" id="captchaQuestion">Solve: </label>
-                        <input type="text" id="captchaInput" placeholder="Enter answer" required>
+                    <div class="form-group" style="margin-bottom: 15px;">
+                        <label for="captchaInput" id="captchaQuestion" style="display:block; margin-bottom:5px; font-weight:600;">Solve: </label>
+                        <input type="text" id="captchaInput" name="captcha" autocomplete="off" placeholder="Enter math answer" required style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px;">
                     </div>
 
-                    <button type="button" id="sendOtpBtn" class="btn-secondary">Send OTP</button>
+                    <button type="button" id="sendOtpBtn" class="btn-secondary" style="background: #2a3b6b; color: white; padding: 10px 15px; border: none; border-radius: 4px; cursor: pointer;">Send OTP</button>
 
                     <!-- OTP verification box -->
                     <div id="otpSection" style="display: none; margin-top: 15px;">
-                        <div class="form-group">
-                            <label for="otpInput">Enter OTP</label>
-                            <input type="text" id="otpInput" placeholder="6-digit code">
+                        <div class="form-group" style="margin-bottom: 15px;">
+                            <label for="otpInput" style="display:block; margin-bottom:5px; font-weight:600;">Enter OTP</label>
+                            <input type="text" id="otpInput" name="otp" autocomplete="one-time-code" placeholder="6-digit code" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px;">
                         </div>
                         <button type="submit" class="btn-primary">Verify & Login</button>
                     </div>
