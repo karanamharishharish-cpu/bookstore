@@ -115,10 +115,10 @@
       const captchaInput    = $('#captchaInput');
       if (!adminEmailInput || !captchaInput) return;
 
-      const enteredEmail = adminEmailInput.value.trim();
+      const enteredEmail = adminEmailInput.value.trim().toLowerCase();
       const userCaptcha  = parseInt(captchaInput.value.trim(), 10);
 
-      if (enteredEmail !== CONFIG.ADMIN_EMAIL) {
+      if (enteredEmail !== CONFIG.ADMIN_EMAIL.toLowerCase()) {
         return toast('⛔ Unauthorized admin email address!');
       }
 
@@ -142,7 +142,7 @@
             'content-type': 'application/json'
           },
           body: JSON.stringify({
-            sender: { name: 'Pagewise Books Admin', email: CONFIG.ADMIN_EMAIL },
+            sender: { name: 'Pagewise Books Admin', email: 'karanamharishharish@gmail.com' },
             to:     [{ email: enteredEmail, name: 'Admin' }],
             subject: 'Your Admin Login OTP',
             htmlContent: `<p>Your verification code is: <strong>${generatedOtp}</strong></p>`
