@@ -3,9 +3,12 @@ const CONFIG = {
   STORE_NAME: 'Pagewise Books',
   UPI_ID: 'kharish7663@naviaxis',   // REPLACE with your real UPI ID (payments go here)
   UPI_NAME: 'Pagewise Books',
-  GOOGLE_CLIENT_ID: '1061355638584-m85d2cqiiajkqbu25paltgqf4r99p2us.apps.googleusercontent.com',         // PASTE your Google OAuth Client ID to enable real Google sign-in
-  ADMIN_HASH: '2eba3131f1e3de3b4a95955b713821ee9e94f721ec77f38185653315399b6dc1'        // SHA-256 of "username:password" (see README to change)
+  GOOGLE_CLIENT_ID: '1061355638584-m85d2cqiiajkqbu25paltgqf4r99p2us.apps.googleusercontent.com', // Add your Google Client ID here if needed
+  BREVO_API_KEY: typeof process !== 'undefined' && process.env && process.env.BREVO_API_KEY ? process.env.BREVO_API_KEY : '',
+  ADMIN_EMAIL: typeof process !== 'undefined' && process.env && process.env.ADMIN_EMAIL ? process.env.ADMIN_EMAIL : '11249A125@kanchiuniv.ac.in',
+  ADMIN_HASH: '2eba3131f1e3de3b4a95955b713821ee9e94f721ec77f38185653315399b6dc1' // Your admin password hash
 };
+
 const $ = (s, r = document) => r.querySelector(s);
 const CATS = { 'Fiction': '#7a2e2a', 'Biography': '#1f5c58', 'Technology': '#2a3b6b', 'Self Help': '#8a5a12', 'History': '#4b3a63', 'Children': '#2f6b3a' };
 const STEPS = ['Placed', 'Packed', 'Shipped', 'Out for delivery', 'Delivered'];
