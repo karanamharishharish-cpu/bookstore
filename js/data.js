@@ -4,7 +4,7 @@ const CONFIG = {
     UPI_ID: 'kharish7663@naviaxis',
     UPI_NAME: 'Pagewise Books',
     GOOGLE_CLIENT_ID: '__GOOGLE_CLIENT_ID_PLACEHOLDER__',
-    BREVO_API_KEY: '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',
+    BREVO_API_KEY: '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',
     ADMIN_EMAIL: '11249A125@kanchiuniv.ac.in',
     ADMIN_HASH: '__ADMIN_HASH_PLACEHOLDER__'
 };
