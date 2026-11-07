@@ -1,0 +1,21 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Inject GitHub Secrets into data.js
+        run: |
+          sed -i 's|__BREVO_API_KEY_PLACEHOLDER__|${{ secrets.BREVO_API_KEY }}|g' js/data.js
+          sed -i 's|__GOOGLE_CLIENT_ID_PLACEHOLDER__|${{ secrets.GOOGLE_CLIENT_ID }}|g' js/data.js
+          sed -i 's|__ADMIN_HASH_PLACEHOLDER__|${{ secrets.ADMIN_HASH }}|g' js/data.js
+
+      - name: Deploy to GitHub Pages
+        uses: actions/deploy-pages@v4
