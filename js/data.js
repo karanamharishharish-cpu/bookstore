@@ -3,10 +3,10 @@ const CONFIG = {
     STORE_NAME: 'Pagewise Books',
     UPI_ID: 'kharish7663@naviaxis',
     UPI_NAME: 'Pagewise Books',
-    GOOGLE_CLIENT_ID: '1061355638584-m85d2cqiiajkqbu25paltgqf4r99p2us.apps.googleusercontent.com',
-    BREVO_API_KEY: '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',
+    GOOGLE_CLIENT_ID: '__GOOGLE_CLIENT_ID_PLACEHOLDER__',
+    BREVO_API_KEY: '__BREVO_API_KEY_PLACEHOLDER__',
     ADMIN_EMAIL: '11249A125@kanchiuniv.ac.in',
-    ADMIN_HASH: '2eba3131f1e3de3b4a95955b713821ee9e94f721ec77f38185653315399b6dc1'
+    ADMIN_HASH: '__ADMIN_HASH_PLACEHOLDER__'
 };
 
 const $ = (s, r = document) => r.querySelector(s);
