@@ -1,30 +1,54 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Home | Pagewise Books</title>
-<link rel="stylesheet" href="css/style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pagewise Books - Home</title>
+    <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-<div id="nav"></div>
-<main>
-<section class="hero">
-  <div>
-    <h1>Books worth carrying home</h1>
-    <p>Browse fiction, biographies, history and technology titles. Search, save favourites, and order in a few clicks.</p>
-    <a class="btn gold" href="books.html">Browse all books</a>
-  </div>
-  <div class="spines" aria-hidden="true">
-    <i style="height:150px;--c:#7a2e2a"></i><i style="height:190px;--c:#1f5c58"></i><i style="height:130px;--c:#2a3b6b"></i><i style="height:210px;--c:#8a5a12"></i><i style="height:165px;--c:#4b3a63"></i><i style="height:140px;--c:#2f6b3a"></i><i style="height:180px;--c:#e0a526"></i>
-  </div>
-</section>
-<h2>Featured books</h2>
-<div class="grid" id="featured"></div>
-</main>
-<div id="foot"></div>
-<script src="js/data.js"></script>
-<script src="js/search.js"></script>
-<script src="js/assistant.js"></script>
+    <div id="nav"></div>
+
+    <main class="container">
+        <section class="hero">
+            <div class="hero-content">
+                <h1>Books worth carrying home</h1>
+                <p>Browse fiction, biographies, history and technology titles. Search, save favourites, and order in a few clicks.</p>
+                <a href="books.html" class="btn-primary">Browse all books</a>
+            </div>
+            <div class="hero-graphic">
+                <div class="bar-chart-visual">
+                    <span class="bar-1"></span>
+                    <span class="bar-2"></span>
+                    <span class="bar-3"></span>
+                    <span class="bar-4"></span>
+                    <span class="bar-5"></span>
+                    <span class="bar-6"></span>
+                    <span class="bar-7"></span>
+                </div>
+            </div>
+        </section>
+
+        <section class="featured-section">
+            <h2>Featured books</h2>
+            <div id="featured-grid" class="grid"></div>
+        </section>
+    </main>
+
+    <div id="foot"></div>
+
+    <script src="js/data.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const books = getBooks();
+            const featuredGrid = $('#featured-grid');
+            if (featuredGrid) {
+                // Display first 4 books as featured
+                featuredGrid.innerHTML = books.slice(0, 4).map(b => cardHTML(b)).join('');
+                bindCards(featuredGrid, () => {});
+                hydrateCovers(featuredGrid);
+            }
+        });
+    </script>
 </body>
 </html>
