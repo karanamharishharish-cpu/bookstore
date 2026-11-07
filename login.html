@@ -5,11 +5,103 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sign In - Pagewise Books</title>
     <link rel="stylesheet" href="css/style.css">
+    <style>
+        /* OTP countdown bar */
+        #otpCountdownBar {
+            display: none;
+            margin: 12px 0 4px;
+        }
+        #otpCountdownBar .otp-bar-track {
+            height: 8px;
+            background: #d5dbe6;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        #otpCountdownFill {
+            height: 100%;
+            width: 100%;
+            background: #1f7a4d;
+            border-radius: 4px;
+            transition: width 0.25s linear, background 0.5s;
+        }
+        #otpCountdownBar .otp-bar-label {
+            display: flex;
+            justify-content: space-between;
+            font-size: .82rem;
+            color: #5b6678;
+            margin-top: 4px;
+        }
+        #otpTimeLabel {
+            font-weight: 700;
+            color: #14213d;
+        }
+        /* Auth layout */
+        .auth-container {
+            max-width: 760px;
+            margin: 48px auto;
+            padding: 0 5vw;
+        }
+        .auth-container h2 {
+            font-family: Georgia, "Times New Roman", serif;
+            font-size: 2rem;
+            color: #14213d;
+            margin-bottom: 24px;
+        }
+        .auth-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 24px;
+        }
+        .auth-card {
+            background: #fff;
+            border: 1px solid #d5dbe6;
+            border-radius: 12px;
+            padding: 28px 24px;
+        }
+        .auth-card h3 {
+            font-family: Georgia, "Times New Roman", serif;
+            margin: 0 0 8px;
+            color: #14213d;
+            font-size: 1.3rem;
+        }
+        .auth-card p {
+            color: #5b6678;
+            margin: 0 0 20px;
+            font-size: .95rem;
+        }
+        .btn-primary {
+            background: #14213d;
+            color: #fff;
+            border: 0;
+            border-radius: 8px;
+            padding: 10px 20px;
+            font: inherit;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 4px;
+        }
+        .btn-primary:hover { background: #22345f; }
+        .btn-secondary {
+            background: #2a3b6b;
+            color: #fff;
+            border: 0;
+            border-radius: 8px;
+            padding: 10px 15px;
+            font: inherit;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .btn-secondary:hover { background: #1f2d55; }
+        .btn-secondary:disabled { background: #9aa3b5; cursor: not-allowed; }
+    </style>
 </head>
 <body>
+    <div id="nav"></div>
+
     <div class="auth-container">
         <h2>Sign in</h2>
-        
+
         <div class="auth-grid">
             <!-- Customer Section -->
             <div class="auth-card">
@@ -19,7 +111,9 @@
                     <form id="demoForm">
                         <div class="form-group" style="margin-bottom: 15px;">
                             <label for="ge" style="display:block; margin-bottom:5px; font-weight:600;">Gmail Address</label>
-                            <input type="email" id="ge" name="email" autocomplete="email" placeholder="Enter your Gmail" required style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px;">
+                            <input type="email" id="ge" name="email" autocomplete="email"
+                                   placeholder="Enter your Gmail" required
+                                   style="width:100%;padding:10px;border:1px solid #ddd;border-radius:4px;">
                         </div>
                         <button type="submit" class="btn-primary">Sign in with Gmail</button>
                     </form>
@@ -32,26 +126,48 @@
                 <h3>Admin</h3>
                 <p>For store staff only.</p>
                 <form id="adminForm">
+                    <!-- Admin Email -->
                     <div class="form-group" style="margin-bottom: 15px;">
-                        <label for="adminEmailInput" style="display:block; margin-bottom:5px; font-weight:600;">Admin Email</label>
-                        <input type="email" id="adminEmailInput" name="adminEmail" placeholder="Enter admin email" required style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px;">
+                        <label for="adminEmailInput" style="display:block;margin-bottom:5px;font-weight:600;">Admin Email</label>
+                        <input type="email" id="adminEmailInput" name="adminEmail"
+                               placeholder="Enter admin email" required
+                               style="width:100%;padding:10px;border:1px solid #ddd;border-radius:4px;">
                     </div>
 
-                    <!-- Math Captcha Section -->
+                    <!-- Math Captcha -->
                     <div class="form-group" style="margin-bottom: 15px;">
-                        <label for="captchaInput" id="captchaQuestion" style="display:block; margin-bottom:5px; font-weight:600;">Solve: </label>
-                        <input type="number" id="captchaInput" name="captcha" placeholder="Result" required style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px;">
+                        <label for="captchaInput" id="captchaQuestion"
+                               style="display:block;margin-bottom:5px;font-weight:600;">Solve: </label>
+                        <input type="number" id="captchaInput" name="captcha"
+                               placeholder="Result" required
+                               style="width:100%;padding:10px;border:1px solid #ddd;border-radius:4px;">
                     </div>
 
-                    <button type="button" id="sendOtpBtn" class="btn-secondary" style="background: #2a3b6b; color: white; padding: 10px 15px; border: none; border-radius: 4px; cursor: pointer;">Send OTP</button>
+                    <!-- Send OTP button -->
+                    <button type="button" id="sendOtpBtn" class="btn-secondary">Send OTP</button>
 
-                    <!-- OTP verification box -->
-                    <div id="otpSection" style="display: none; margin-top: 15px;">
-                        <div class="form-group" style="margin-bottom: 15px;">
-                            <label for="otpInput" style="display:block; margin-bottom:5px; font-weight:600;">Enter OTP</label>
-                            <input type="text" id="otpInput" name="otp" placeholder="Enter 6-digit OTP" required style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px;">
+                    <!-- OTP verification section (hidden until OTP is sent) -->
+                    <div id="otpSection" style="display:none; margin-top:16px;">
+
+                        <!-- Countdown progress bar -->
+                        <div id="otpCountdownBar">
+                            <div class="otp-bar-track">
+                                <div id="otpCountdownFill"></div>
+                            </div>
+                            <div class="otp-bar-label">
+                                <span>OTP expires in</span>
+                                <span id="otpTimeLabel">55s</span>
+                            </div>
                         </div>
-                        <button type="submit" class="btn-primary">Verify & Login</button>
+
+                        <!-- OTP input -->
+                        <div class="form-group" style="margin-bottom:12px; margin-top:8px;">
+                            <label for="otpInput" style="display:block;margin-bottom:5px;font-weight:600;">Enter OTP</label>
+                            <input type="text" id="otpInput" name="otp"
+                                   placeholder="Enter 6-digit OTP" required maxlength="6"
+                                   style="width:100%;padding:10px;border:1px solid #ddd;border-radius:4px;letter-spacing:4px;font-size:1.1rem;">
+                        </div>
+                        <button type="submit" class="btn-primary">Verify &amp; Login</button>
                     </div>
                 </form>
             </div>
