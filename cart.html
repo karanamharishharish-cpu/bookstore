@@ -7,37 +7,88 @@
 <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
+
 <div id="nav"></div>
+
 <main>
-<h1>Your cart</h1>
-<div id="cartBox"></div>
-<p class="notice" id="loginNote" hidden>Please <a href="login.html?next=cart.html">sign in with Gmail</a> to place your order.</p>
-<form class="panel" id="checkout" hidden>
-  <h2>Checkout</h2>
-  <div class="form">
-    <label>Full name<input id="name" autocomplete="name" required></label>
-    <label>Mobile number<input id="phone" type="tel" inputmode="numeric" maxlength="10" autocomplete="tel" required></label>
-    <label class="wide">Delivery address<textarea id="addr" rows="3" autocomplete="street-address" required></textarea></label>
-    <label>Payment method
-      <select id="pay"><option>Cash on delivery</option><option>UPI (GPay, PhonePe, Paytm)</option></select>
-    </label>
-  </div>
-  <p><button class="btn gold" type="submit">Place order</button></p>
-</form>
-<section id="trackBox" hidden></section>
-<div class="modal" id="upiModal" role="dialog" aria-modal="true" aria-labelledby="upiT" hidden>
-  <div class="sheet">
-    <h2 id="upiT">Pay with UPI</h2>
-    <p>Amount to pay: <strong id="upiAmt"></strong></p>
-    <a class="btn gold" id="upiLink" href="#">Open UPI app</a>
-    <div id="qr"></div>
-    <p><small>On a phone the button opens your UPI app. On a computer, scan the QR code with any UPI app. After paying, come back and tap the button below.</small></p>
-    <button class="btn" id="upiDone" type="button">I have paid</button>
-    <button class="link" id="upiCancel" type="button">Cancel</button>
-  </div>
-</div>
+    <div class="page-title">
+        <h1>🛒 Your Cart</h1>
+    </div>
+
+    <!-- Login notice — shown by cart.js when user not signed in -->
+    <p class="notice" id="loginNote" hidden>
+        Please <a href="login.html?next=cart.html">sign in with Gmail</a> to place your order.
+    </p>
+
+    <!-- Cart items — populated by cart.js -->
+    <div id="cartBox"></div>
+
+    <!-- Checkout form — shown by cart.js after cart items -->
+    <form class="panel" id="checkout" hidden>
+        <h2>Delivery &amp; Payment Details</h2>
+        <div class="form">
+            <label>Full name<input id="name" autocomplete="name" required placeholder="Your full name"></label>
+            <label>Mobile number<input id="phone" type="tel" inputmode="numeric" maxlength="10" autocomplete="tel" required placeholder="10-digit mobile"></label>
+            <label class="wide">Delivery address<textarea id="addr" rows="3" autocomplete="street-address" required placeholder="House / Flat, Street, City, PIN"></textarea></label>
+            <label>Payment method
+                <select id="pay">
+                    <option>Cash on delivery</option>
+                    <option>UPI (GPay, PhonePe, Paytm)</option>
+                </select>
+            </label>
+        </div>
+        <p style="margin-top:20px;">
+            <button class="btn gold wide" type="submit">✅ Place Order</button>
+        </p>
+    </form>
+
+    <!-- Tracking box — used by cart.js post-order -->
+    <section id="trackBox" hidden></section>
+
+    <!-- UPI Payment Modal -->
+    <div class="modal" id="upiModal" role="dialog" aria-modal="true" aria-labelledby="upiT" hidden>
+        <div class="sheet">
+            <h2 id="upiT">Pay with UPI</h2>
+            <p>Amount to pay: <strong id="upiAmt"></strong></p>
+            <a class="btn gold wide" id="upiLink" href="#">Open UPI App</a>
+            <div id="qr"></div>
+            <p><small>On a phone the button opens your UPI app. On a computer, scan the QR code with any UPI app. After paying, come back and tap the button below.</small></p>
+            <button class="btn wide" id="upiDone" type="button">✔ I Have Paid</button>
+            <button class="link" id="upiCancel" type="button">Cancel</button>
+        </div>
+    </div>
 </main>
-<div id="foot"></div>
+
+<!-- Direct footer -->
+<footer>
+  <div class="footer-inner">
+    <div class="footer-brand">
+      <span>📚 Pagewise Books</span>
+      <p>Your trusted online bookstore. Quality books, fast delivery.</p>
+    </div>
+    <div class="footer-links">
+      <h4>Quick Links</h4>
+      <a href="index.html">Home</a>
+      <a href="books.html">All Books</a>
+      <a href="cart.html">Cart</a>
+      <a href="orders.html">My Orders</a>
+    </div>
+    <div class="footer-contact">
+      <h4>Categories</h4>
+      <span>Fiction</span>
+      <span>Biography</span>
+      <span>Technology</span>
+      <span>Self Help</span>
+      <span>History</span>
+      <span>Children</span>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <p>© 2026 Pagewise Books. All rights reserved.</p>
+    <p>Developed by <strong>K Harish</strong> &nbsp;|&nbsp; Any queries: <a href="mailto:karanamharish8@gmail.com">karanamharish8@gmail.com</a></p>
+  </div>
+</footer>
+
 <script src="js/data.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="js/cart.js"></script>

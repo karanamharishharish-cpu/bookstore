@@ -7,30 +7,108 @@
 <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
+
 <div id="nav"></div>
+
 <main>
-<h1>Admin</h1>
-<p><button class="ghost" id="reset" type="button">Reset demo data</button></p>
-<form class="panel" id="bookForm">
-  <h2 id="formTitle">Add a book</h2>
-  <input type="hidden" id="bid">
-  <div class="form">
-    <label>Title<input id="title" required></label>
-    <label>Author<input id="author" required></label>
-    <label>Category<select id="cat"></select></label>
-    <label>Price (INR)<input id="price" type="number" min="1" step="1" required></label>
-    <label>Stock<input id="stock" type="number" min="0" step="1" required></label>
-    <label>Cover image link (optional)<input id="img" type="url" placeholder="https://..."></label>
-    <label class="wide">Description<textarea id="desc" rows="2"></textarea></label>
-  </div>
-  <p><button class="btn" type="submit">Save book</button></p>
-</form>
-<section class="panel"><h2>Books</h2><div class="scroll"><table>
-  <thead><tr><th>Title</th><th>Category</th><th>Price</th><th>Stock</th><th>Actions</th></tr></thead><tbody id="books"></tbody></table></div></section>
-<section class="panel"><h2>Orders and tracking</h2><div class="scroll"><table>
-  <thead><tr><th>Order</th><th>Customer</th><th>Total</th><th>Payment</th><th>Status</th></tr></thead><tbody id="orders"></tbody></table></div></section>
+
+    <!-- Admin header banner -->
+    <div class="admin-header">
+        <div>
+            <h1>🔐 Admin Panel</h1>
+            <p>Manage books, inventory and customer orders</p>
+        </div>
+        <button class="ghost noprint" id="reset" type="button">🔄 Reset Demo Data</button>
+    </div>
+
+    <!-- Add / Edit Book form -->
+    <form class="panel" id="bookForm">
+        <h2 id="formTitle">Add a Book</h2>
+        <input type="hidden" id="bid">
+        <div class="form">
+            <label>Title<input id="title" required placeholder="Book title"></label>
+            <label>Author<input id="author" required placeholder="Author name"></label>
+            <label>Category<select id="cat"></select></label>
+            <label>Price (INR)<input id="price" type="number" min="1" step="1" required placeholder="e.g. 299"></label>
+            <label>Stock<input id="stock" type="number" min="0" step="1" required placeholder="e.g. 10"></label>
+            <label>Cover image link (optional)<input id="img" type="url" placeholder="https://..."></label>
+            <label class="wide">Description<textarea id="desc" rows="2" placeholder="Brief description of the book"></textarea></label>
+        </div>
+        <p style="margin-top:16px;">
+            <button class="btn gold" type="submit">💾 Save Book</button>
+        </p>
+    </form>
+
+    <!-- Books table -->
+    <section class="panel">
+        <h2>📚 Books Inventory</h2>
+        <div class="scroll">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Title</th>
+                        <th>Category</th>
+                        <th>Price</th>
+                        <th>Stock</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="books"></tbody>
+            </table>
+        </div>
+    </section>
+
+    <!-- Orders table -->
+    <section class="panel">
+        <h2>📦 Orders &amp; Tracking</h2>
+        <div class="scroll">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Order</th>
+                        <th>Customer</th>
+                        <th>Total</th>
+                        <th>Payment</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody id="orders"></tbody>
+            </table>
+        </div>
+    </section>
+
 </main>
-<div id="foot"></div>
+
+<!-- Direct footer -->
+<footer>
+  <div class="footer-inner">
+    <div class="footer-brand">
+      <span>📚 Pagewise Books</span>
+      <p>Your trusted online bookstore. Quality books, fast delivery.</p>
+    </div>
+    <div class="footer-links">
+      <h4>Quick Links</h4>
+      <a href="index.html">Home</a>
+      <a href="books.html">All Books</a>
+      <a href="cart.html">Cart</a>
+      <a href="orders.html">My Orders</a>
+    </div>
+    <div class="footer-contact">
+      <h4>Categories</h4>
+      <span>Fiction</span>
+      <span>Biography</span>
+      <span>Technology</span>
+      <span>Self Help</span>
+      <span>History</span>
+      <span>Children</span>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <p>© 2026 Pagewise Books. All rights reserved.</p>
+    <p>Developed by <strong>K Harish</strong> &nbsp;|&nbsp; Any queries: <a href="mailto:karanamharish8@gmail.com">karanamharish8@gmail.com</a></p>
+  </div>
+</footer>
+
 <script src="js/data.js"></script>
 <script src="js/admin.js"></script>
 <script src="js/assistant.js"></script>

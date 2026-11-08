@@ -3,18 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pagewise Books - Home</title>
+    <title>Pagewise Books - India's Favourite Online Bookstore</title>
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
+
+    <!-- JS fills this with <header class="bar">…</header> -->
     <div id="nav"></div>
 
     <main class="container">
+
+        <!-- ── HERO BANNER ── -->
         <section class="hero">
             <div class="hero-content">
-                <h1>Books worth carrying home</h1>
-                <p>Browse fiction, biographies, history and technology titles. Search, save favourites, and order in a few clicks.</p>
-                <a href="books.html" class="btn-primary">Browse all books</a>
+                <h1>India's Favourite Online Bookstore 📚</h1>
+                <p>Discover bestsellers, classics &amp; more. Free delivery on orders above ₹499</p>
+                <a href="books.html" class="hero-cta">Shop Now →</a>
             </div>
             <div class="hero-graphic">
                 <div class="bar-chart-visual">
@@ -29,13 +33,80 @@
             </div>
         </section>
 
+        <!-- ── CATEGORY CHIPS ── -->
+        <div class="cat-row" role="list" aria-label="Browse by category">
+            <a href="books.html?cat=Fiction"     class="cat-chip" role="listitem">📖 Fiction</a>
+            <a href="books.html?cat=Biography"   class="cat-chip" role="listitem">🏅 Biography</a>
+            <a href="books.html?cat=Technology"  class="cat-chip" role="listitem">💻 Technology</a>
+            <a href="books.html?cat=Self+Help"   class="cat-chip" role="listitem">🌱 Self Help</a>
+            <a href="books.html?cat=History"     class="cat-chip" role="listitem">🏛️ History</a>
+            <a href="books.html?cat=Children"    class="cat-chip" role="listitem">🧒 Children</a>
+        </div>
+
+        <!-- ── FEATURED BOOKS ── -->
         <section class="featured-section">
-            <h2>Featured books</h2>
+            <div class="section-header">
+                <h2>Featured Books</h2>
+                <a href="books.html">View all →</a>
+            </div>
             <div id="featured-grid" class="grid"></div>
         </section>
+
+        <!-- ── WHY SHOP WITH US ── -->
+        <section class="features-section">
+            <div class="section-header">
+                <h2>Why Shop With Us</h2>
+            </div>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <span class="feature-icon">🚚</span>
+                    <h3>Fast Delivery</h3>
+                    <p>Orders dispatched within 24 hours. Free shipping on orders above ₹499.</p>
+                </div>
+                <div class="feature-card">
+                    <span class="feature-icon">📚</span>
+                    <h3>Curated Books</h3>
+                    <p>Hand-picked titles across all genres — from Indian classics to global bestsellers.</p>
+                </div>
+                <div class="feature-card">
+                    <span class="feature-icon">💳</span>
+                    <h3>Easy Payment</h3>
+                    <p>Pay with UPI, GPay, PhonePe, Paytm or cash on delivery. 100% secure.</p>
+                </div>
+            </div>
+        </section>
+
     </main>
 
-    <div id="foot"></div>
+    <!-- Direct footer (replaces JS-injected #foot) -->
+    <footer>
+      <div class="footer-inner">
+        <div class="footer-brand">
+          <span>📚 Pagewise Books</span>
+          <p>Your trusted online bookstore. Quality books, fast delivery.</p>
+        </div>
+        <div class="footer-links">
+          <h4>Quick Links</h4>
+          <a href="index.html">Home</a>
+          <a href="books.html">All Books</a>
+          <a href="cart.html">Cart</a>
+          <a href="orders.html">My Orders</a>
+        </div>
+        <div class="footer-contact">
+          <h4>Categories</h4>
+          <span>Fiction</span>
+          <span>Biography</span>
+          <span>Technology</span>
+          <span>Self Help</span>
+          <span>History</span>
+          <span>Children</span>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>© 2026 Pagewise Books. All rights reserved.</p>
+        <p>Developed by <strong>K Harish</strong> &nbsp;|&nbsp; Any queries: <a href="mailto:karanamharish8@gmail.com">karanamharish8@gmail.com</a></p>
+      </div>
+    </footer>
 
     <script src="js/data.js"></script>
     <script>

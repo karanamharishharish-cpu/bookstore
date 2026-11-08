@@ -3,26 +3,69 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Books | Pagewise Books</title>
+<title>All Books | Pagewise Books</title>
 <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
+
 <div id="nav"></div>
+
 <main>
-<h1>All books</h1>
-<div class="tools">
-  <input type="search" id="q" placeholder="Search by title or author" aria-label="Search books">
-  <select id="cat" aria-label="Category"></select>
-  <select id="sort" aria-label="Sort">
-    <option value="">Sort: Default</option><option value="low">Price: low to high</option>
-    <option value="high">Price: high to low</option><option value="title">Title: A to Z</option>
-  </select>
-  <label><input type="checkbox" id="wo"> Wishlist only</label>
-</div>
-<p id="count"><small></small></p>
-<div class="grid" id="grid"></div>
+    <!-- Page title -->
+    <div class="page-title">
+        <h1>All Books</h1>
+        <span class="count" id="count"><small></small></span>
+    </div>
+
+    <!-- Filter bar — IDs #q, #cat, #sort, #wo are used by search.js -->
+    <div class="tools" role="search" aria-label="Filter books">
+        <input type="search" id="q" placeholder="🔍  Search by title or author" aria-label="Search books">
+        <select id="cat" aria-label="Category"></select>
+        <select id="sort" aria-label="Sort">
+            <option value="">Sort: Default</option>
+            <option value="low">Price: Low to High</option>
+            <option value="high">Price: High to Low</option>
+            <option value="title">Title: A to Z</option>
+        </select>
+        <label>
+            <input type="checkbox" id="wo"> Wishlist only
+        </label>
+    </div>
+
+    <!-- Books grid — #grid is populated by search.js -->
+    <div class="grid" id="grid"></div>
 </main>
-<div id="foot"></div>
+
+<!-- Direct footer -->
+<footer>
+  <div class="footer-inner">
+    <div class="footer-brand">
+      <span>📚 Pagewise Books</span>
+      <p>Your trusted online bookstore. Quality books, fast delivery.</p>
+    </div>
+    <div class="footer-links">
+      <h4>Quick Links</h4>
+      <a href="index.html">Home</a>
+      <a href="books.html">All Books</a>
+      <a href="cart.html">Cart</a>
+      <a href="orders.html">My Orders</a>
+    </div>
+    <div class="footer-contact">
+      <h4>Categories</h4>
+      <span>Fiction</span>
+      <span>Biography</span>
+      <span>Technology</span>
+      <span>Self Help</span>
+      <span>History</span>
+      <span>Children</span>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <p>© 2026 Pagewise Books. All rights reserved.</p>
+    <p>Developed by <strong>K Harish</strong> &nbsp;|&nbsp; Any queries: <a href="mailto:karanamharish8@gmail.com">karanamharish8@gmail.com</a></p>
+  </div>
+</footer>
+
 <script src="js/data.js"></script>
 <script src="js/search.js"></script>
 <script src="js/assistant.js"></script>

@@ -3,18 +3,58 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Orders | Pagewise Books</title>
+<title>My Orders | Pagewise Books</title>
 <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
+
 <div id="nav"></div>
+
 <main>
-<h1>Your orders</h1>
-<p class="notice" id="placed" role="status" hidden></p>
-<div id="orderList"></div>
-<section class="panel" id="invoice" hidden></section>
+    <div class="page-title">
+        <h1>📦 Your Orders</h1>
+    </div>
+
+    <!-- Order placement notice (shown after checkout) — #placed used by cart.js -->
+    <p class="notice" id="placed" role="status" hidden></p>
+
+    <!-- Order list — #orderList populated by cart.js -->
+    <div id="orderList"></div>
+
+    <!-- Invoice panel — #invoice used by cart.js -->
+    <section class="panel" id="invoice" hidden></section>
 </main>
-<div id="foot"></div>
+
+<!-- Direct footer -->
+<footer>
+  <div class="footer-inner">
+    <div class="footer-brand">
+      <span>📚 Pagewise Books</span>
+      <p>Your trusted online bookstore. Quality books, fast delivery.</p>
+    </div>
+    <div class="footer-links">
+      <h4>Quick Links</h4>
+      <a href="index.html">Home</a>
+      <a href="books.html">All Books</a>
+      <a href="cart.html">Cart</a>
+      <a href="orders.html">My Orders</a>
+    </div>
+    <div class="footer-contact">
+      <h4>Categories</h4>
+      <span>Fiction</span>
+      <span>Biography</span>
+      <span>Technology</span>
+      <span>Self Help</span>
+      <span>History</span>
+      <span>Children</span>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <p>© 2026 Pagewise Books. All rights reserved.</p>
+    <p>Developed by <strong>K Harish</strong> &nbsp;|&nbsp; Any queries: <a href="mailto:karanamharish8@gmail.com">karanamharish8@gmail.com</a></p>
+  </div>
+</footer>
+
 <script src="js/data.js"></script>
 <script src="js/cart.js"></script>
 <script src="js/assistant.js"></script>
