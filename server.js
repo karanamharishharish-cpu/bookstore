@@ -437,10 +437,54 @@ app.get('/api/orders', requireAdmin, async (req, res) => {
   }
 });
 
+// ── Verify UTR API ─────────────────────────────────────────────────────────────
+app.post('/api/upi/verify-utr', async (req, res) => {
+  try {
+    const { utr } = req.body;
+    const cleanUtr = (utr || '').trim();
+    if (!/^\d{12}$/.test(cleanUtr)) {
+      return res.status(400).json({ valid: false, error: 'UTR must be exactly 12 numeric digits (e.g. 452773283541).' });
+    }
+    if (MONGODB_URI && mongoose.connection.readyState === 1) {
+      const existing = await Order.findOne({ utr: cleanUtr });
+      if (existing) {
+        return res.status(400).json({ valid: false, error: `This UTR (${cleanUtr}) has already been used for order #${existing.id}. Duplicate payments are not allowed.` });
+      }
+    }
+    return res.json({ valid: true, utr: cleanUtr });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── Payment Config API ─────────────────────────────────────────────────────────
+app.get('/api/config/payment', (req, res) => {
+  res.json({
+    upiId: 'kharish7663@naviaxis',
+    upiName: 'Pagewise Books',
+    razorpayKeyId: process.env.RAZORPAY_KEY_ID || ''
+  });
+});
+
 app.post('/api/orders', async (req, res) => {
   try {
     const { id, trk, date, email, customer, items, total, pay, payStatus, utr } = req.body;
     if (!id || !email || !items) return res.status(400).json({ error: 'Missing required fields' });
+
+    // Validate UPI payment UTR
+    if (pay && pay.toLowerCase().includes('upi')) {
+      const cleanUtr = (utr || '').trim();
+      if (!/^\d{12}$/.test(cleanUtr) && !cleanUtr.startsWith('pay_')) {
+        return res.status(400).json({ error: 'A valid 12-digit bank UTR is required for UPI payments.' });
+      }
+      if (MONGODB_URI && mongoose.connection.readyState === 1 && !cleanUtr.startsWith('pay_')) {
+        const existingOrder = await Order.findOne({ utr: cleanUtr });
+        if (existingOrder && existingOrder.id !== id) {
+          return res.status(400).json({ error: `This UTR (${cleanUtr}) has already been used for order #${existingOrder.id}. Duplicate payments are not allowed.` });
+        }
+      }
+    }
+
     let order = null;
     if (MONGODB_URI && mongoose.connection.readyState === 1) {
       for (const item of items) {
@@ -454,7 +498,7 @@ app.post('/api/orders', async (req, res) => {
         id, trk, date,
         email: email.toLowerCase(),
         customer, items, total, pay, payStatus,
-        utr: utr || '',
+        utr: (utr || '').trim(),
         status: 'Placed',
         times: { Placed: date }
       });

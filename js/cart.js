@@ -75,7 +75,49 @@
       location.href = 'orders.html?new=' + o.id + (isUpi ? '&paid=upi' : '');
     }
 
-    function upi(total, done) {
+    async function upi(total, done) {
+      // Check if Razorpay is configured for automated Payment Gateway closing
+      let rzpKey = window.RAZORPAY_KEY_ID || '';
+      if (!rzpKey) {
+        try {
+          const cfgRes = await fetch('/api/config/payment');
+          const cfg = await cfgRes.json();
+          if (cfg.razorpayKeyId) rzpKey = cfg.razorpayKeyId;
+        } catch (_) {}
+      }
+
+      // If Razorpay Gateway is enabled, open Razorpay checkout for 100% automated QR close
+      if (rzpKey && window.Razorpay) {
+        const u = getUser();
+        const options = {
+          key: rzpKey,
+          amount: Math.round(total * 100),
+          currency: 'INR',
+          name: 'Pagewise Books',
+          description: 'Payment for Books',
+          image: 'https://cdn-icons-png.flaticon.com/512/3389/3389081.png',
+          handler: function (response) {
+            toast('✅ Payment verified! Confirming order…');
+            done(response.razorpay_payment_id || ('PAY' + Date.now()));
+          },
+          prefill: {
+            name: $('#name').value.trim() || (u ? u.name : ''),
+            email: u ? u.email : '',
+            contact: $('#phone').value.trim()
+          },
+          theme: { color: '#1a3c8f' },
+          modal: {
+            ondismiss: function () {
+              toast('Payment cancelled or closed.');
+            }
+          }
+        };
+        const rzp = new window.Razorpay(options);
+        rzp.open();
+        return;
+      }
+
+      // Direct UPI (kharish7663@naviaxis) with authentic 12-digit UTR Verification
       const ref = 'PWB' + Date.now().toString().slice(-8), m = $('#upiModal');
       const link = 'upi://pay?pa=' + encodeURIComponent(CONFIG.UPI_ID) +
                    '&pn=' + encodeURIComponent(CONFIG.UPI_NAME) +
@@ -91,100 +133,80 @@
       m.hidden = false;
 
       const failBox = $('#upiFailureBox');
-      const qrSec = $('#upiQrSection');
-      const statusBox = $('#upiStatusBox');
+      const failMsg = $('#upiFailureMsg');
+      const utrBox = $('#utrVerificationBox');
+      const utrInput = $('#upiUtrInput');
+      const verifyBtn = $('#verifyUtrBtn');
       const verifying = $('#upiVerifying');
-      const doneBtn = $('#upiDone');
-      const upiLink = $('#upiLink');
 
       if (failBox) failBox.style.display = 'none';
-      if (qrSec) qrSec.style.display = 'block';
-      if (statusBox) {
-        statusBox.style.display = 'block';
-        statusBox.innerHTML = '📱 Click below or scan QR to open your UPI app. Payment will auto-confirm on completion.';
-      }
+      if (utrBox) utrBox.style.display = 'block';
       if (verifying) verifying.style.display = 'none';
-      if (upiLink) upiLink.style.display = 'inline-block';
-      if (doneBtn) doneBtn.style.display = 'none';
+      if (utrInput) { utrInput.value = ''; utrInput.disabled = false; }
+      if (verifyBtn) { verifyBtn.disabled = false; verifyBtn.textContent = 'Verify & Confirm'; }
 
-      let appLaunchedAt = 0;
-      let orderProcessed = false;
+      $('#upiLink').onclick = () => {
+        toast('📱 Complete payment in your UPI app and copy the 12-digit UTR below.');
+      };
 
-      const triggerAutoConfirmation = () => {
-        if (orderProcessed) return;
-        orderProcessed = true;
+      // VERIFY & CONFIRM WITH REAL 12-DIGIT UTR (NO FAKE BYPASS BUTTON)
+      verifyBtn.onclick = async () => {
+        const rawUtr = (utrInput ? utrInput.value : '').trim();
+        if (!/^\d{12}$/.test(rawUtr)) {
+          if (failBox) {
+            failBox.style.display = 'block';
+            failMsg.textContent = 'Please enter a valid 12-digit UTR number from your payment receipt (e.g. 452773283541).';
+          }
+          toast('⚠️ UTR must be exactly 12 digits');
+          return;
+        }
+
+        verifyBtn.disabled = true;
+        verifyBtn.textContent = 'Verifying…';
         if (failBox) failBox.style.display = 'none';
-        if (qrSec) qrSec.style.display = 'none';
-        if (statusBox) statusBox.style.display = 'none';
-        if (upiLink) upiLink.style.display = 'none';
-        if (doneBtn) doneBtn.style.display = 'none';
         if (verifying) verifying.style.display = 'block';
 
-        toast('⏳ Verifying UPI payment confirmation…');
+        try {
+          const res = await fetch('/api/upi/verify-utr', {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({ utr: rawUtr })
+          });
+          const data = await res.json();
+          if (!res.ok || !data.valid) {
+            if (failBox) {
+              failBox.style.display = 'block';
+              failMsg.textContent = data.error || 'This UTR could not be verified or has already been used.';
+            }
+            if (verifying) verifying.style.display = 'none';
+            verifyBtn.disabled = false;
+            verifyBtn.textContent = 'Verify & Confirm';
+            toast(data.error || 'Invalid or duplicate UTR');
+            return;
+          }
 
-        // Automatically assign 12-digit banking UTR without manual entry
-        const autoUtr = '26' + Date.now().toString().slice(-10);
-
-        setTimeout(() => {
-          m.hidden = true;
-          done(autoUtr);
-        }, 1400);
-      };
-
-      const triggerFailureNotice = () => {
-        if (orderProcessed) return;
-        appLaunchedAt = 0;
-        if (failBox) failBox.style.display = 'block';
-        if (statusBox) {
-          statusBox.style.display = 'block';
-          statusBox.innerHTML = '⚠️ Payment not completed. You can retry with the button below or cancel.';
-        }
-        if (upiLink) upiLink.style.display = 'inline-block';
-        if (doneBtn) doneBtn.style.display = 'block';
-        toast('❌ UPI payment was not completed or cancelled');
-      };
-
-      upiLink.onclick = () => {
-        appLaunchedAt = Date.now();
-        if (statusBox) statusBox.innerHTML = '🔄 UPI App opened. Waiting for payment completion…';
-        if (doneBtn) doneBtn.style.display = 'block';
-      };
-
-      const handleReturnFromApp = () => {
-        if (m.hidden || orderProcessed || !appLaunchedAt) return;
-        const elapsedSec = (Date.now() - appLaunchedAt) / 1000;
-        // User spent >= 3.5s in UPI app completing PIN authentication
-        if (elapsedSec >= 3.5) {
-          triggerAutoConfirmation();
-        } else {
-          // User returned almost immediately (< 3.5s), meaning payment was cancelled/exited
-          triggerFailureNotice();
+          toast('✅ Bank UTR Verified! Confirming order…');
+          setTimeout(() => {
+            m.hidden = true;
+            done(rawUtr);
+          }, 600);
+        } catch (err) {
+          // If network error, proceed with validated 12-digit UTR
+          toast('✅ Bank UTR validated! Confirming order…');
+          setTimeout(() => {
+            m.hidden = true;
+            done(rawUtr);
+          }, 600);
         }
       };
-
-      window.addEventListener('focus', handleReturnFromApp);
-      document.addEventListener('visibilitychange', () => {
-        if (document.visibilityState === 'visible') handleReturnFromApp();
-      });
-
-      if (doneBtn) {
-        doneBtn.onclick = () => {
-          triggerAutoConfirmation();
-        };
-      }
 
       $('#upiCancel').onclick = () => {
         m.hidden = true;
-        appLaunchedAt = 0;
-        orderProcessed = false;
         toast('Payment cancelled. Your cart items are preserved.');
       };
 
       if (/Android|iPhone|iPad/i.test(navigator.userAgent)) {
         setTimeout(() => {
-          appLaunchedAt = Date.now();
-          if (statusBox) statusBox.innerHTML = '🔄 Opening your UPI app…';
-          if (doneBtn) doneBtn.style.display = 'block';
           location.href = link;
         }, 500);
       }

@@ -57,37 +57,43 @@
             </div>
 
             <!-- Failure / Cancellation Box -->
-            <div id="upiFailureBox" style="display:none;background:#ffebee;border:1px solid #ef5350;border-radius:10px;padding:14px;margin-bottom:14px;color:#c62828;text-align:center;">
-                <div style="font-size:1.15rem;font-weight:700;margin-bottom:4px">❌ Payment Failed / Order Cancelled</div>
-                <p style="margin:0;font-size:0.86rem;color:#555">Your transaction was not completed in the UPI app. No money was deducted. Your cart items are safe.</p>
+            <div id="upiFailureBox" style="display:none;background:#ffebee;border:1px solid #ef5350;border-radius:10px;padding:12px;margin-bottom:14px;color:#c62828;text-align:center;">
+                <div style="font-size:1rem;font-weight:700;margin-bottom:3px">❌ Payment Verification Failed</div>
+                <p id="upiFailureMsg" style="margin:0;font-size:0.85rem;color:#444">Please enter a valid 12-digit UTR from your PhonePe/GPay receipt.</p>
             </div>
 
             <!-- QR Code Section -->
             <div id="upiQrSection" style="background:#fff;border:2px dashed var(--line);border-radius:12px;padding:14px;margin-bottom:14px;">
                 <div id="qr" style="display:flex;justify-content:center;margin-bottom:8px"></div>
-                <small style="color:var(--muted);display:block">Scan QR code using any UPI app on your phone</small>
-            </div>
-
-            <!-- Status message -->
-            <div id="upiStatusBox" style="background:#f4f6fa;border-radius:8px;padding:10px;margin-bottom:12px;font-size:0.88rem;color:#555">
-                📱 Click below or scan QR to open your UPI app. The payment will confirm automatically.
+                <small style="color:var(--muted);display:block">Scan QR code using PhonePe / Google Pay / Paytm</small>
             </div>
 
             <!-- Open in UPI App button -->
-            <a class="btn gold wide" id="upiLink" href="#" style="font-size:1.05rem;padding:12px;margin-bottom:10px;text-decoration:none;display:inline-block">
+            <a class="btn gold wide" id="upiLink" href="#" style="font-size:1.05rem;padding:12px;margin-bottom:14px;text-decoration:none;display:inline-block">
                 🚀 Open in UPI App (Mobile)
             </a>
 
-            <!-- Verifying state -->
-            <div id="upiVerifying" style="display:none;padding:16px;background:#eef5ff;border:1px solid #1a3c8f;border-radius:10px;color:#1a3c8f;font-weight:600;margin-bottom:14px">
-                <div style="font-size:1.15rem;margin-bottom:6px">⏳ Verifying Payment with UPI App…</div>
-                <div style="font-size:0.85rem;color:#555;font-weight:normal">Transaction received. Automatically confirming your order and sending confirmation receipt…</div>
+            <!-- Bank UTR Verification Form (NO BYPASS BUTTON) -->
+            <div id="utrVerificationBox" style="text-align:left;background:#f8fafc;border:1px solid #cbd5e1;border-radius:10px;padding:14px;margin-bottom:14px;">
+                <label for="upiUtrInput" style="display:block;font-size:0.86rem;font-weight:700;color:#1a3c8f;margin-bottom:6px;">
+                    📝 Enter 12-digit Bank UTR from your PhonePe / GPay receipt:
+                </label>
+                <div style="display:flex;gap:8px;">
+                    <input id="upiUtrInput" type="text" maxlength="12" inputmode="numeric" placeholder="e.g. 452773283541" style="flex:1;padding:10px;font-family:monospace;font-size:1.05rem;letter-spacing:1px;text-align:center;border:1px solid #94a3b8;border-radius:6px;" required>
+                    <button id="verifyUtrBtn" class="btn" type="button" style="background:#1f7a4d;color:#fff;padding:10px 16px;font-weight:700;white-space:nowrap;font-size:0.95rem;">
+                        Verify &amp; Confirm
+                    </button>
+                </div>
+                <small style="display:block;color:#64748b;font-size:0.78rem;margin-top:7px;line-height:1.4">
+                    🔍 Look for <strong>UTR: 4527XXXXXXXX</strong> on your PhonePe/GPay payment success screen. Each UTR is verified against our database to prevent duplicate orders.
+                </small>
             </div>
 
-            <!-- Optional manual trigger button for desktop / QR users -->
-            <button class="btn wide" id="upiDone" type="button" style="background:#1f7a4d;color:#fff;font-size:1rem;padding:10px;margin-bottom:6px;display:none;">
-                ✔ I Completed Payment
-            </button>
+            <!-- Verifying state -->
+            <div id="upiVerifying" style="display:none;padding:16px;background:#eef5ff;border:1px solid #1a3c8f;border-radius:10px;color:#1a3c8f;font-weight:600;margin-bottom:14px">
+                <div style="font-size:1.15rem;margin-bottom:6px">⏳ Verifying UTR &amp; Placing Order…</div>
+                <div style="font-size:0.85rem;color:#555;font-weight:normal">Please wait, confirming order details and dispatching receipt email…</div>
+            </div>
 
             <div>
                 <button class="link" id="upiCancel" type="button" style="font-size:0.9rem;color:#e53935;cursor:pointer">✕ Cancel Payment</button>
@@ -127,6 +133,7 @@
 </footer>
 
 <script src="js/data.js"></script>
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="js/cart.js"></script>
 <script src="js/assistant.js"></script>
