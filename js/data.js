@@ -4,7 +4,8 @@ const CONFIG = {
     UPI_ID: 'kharish7663@naviaxis',
     UPI_NAME: 'Pagewise Books',
     GOOGLE_CLIENT_ID: '__GOOGLE_CLIENT_ID_PLACEHOLDER__',
-    BREVO_API_KEY: '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',
+    // BREVO_API_KEY removed — the key now lives in Render's environment variables only.
+    // The frontend calls POST /send-otp on our own backend server instead of Brevo directly.
     ADMIN_EMAIL: '11249a125@kanchiuniv.ac.in',
     ADMIN_HASH: '__ADMIN_HASH_PLACEHOLDER__'
 };

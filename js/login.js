@@ -134,19 +134,12 @@
       sendOtpBtn.disabled    = true;
 
       try {
-        const response = await fetch('https://api.brevo.com/v3/smtp/email', {
+        // Calls our own backend server (/send-otp) which forwards to Brevo.
+        // The BREVO_API_KEY is kept secret in Render's environment variables — never exposed in browser.
+        const response = await fetch('/send-otp', {
           method: 'POST',
-          headers: {
-            'accept':       'application/json',
-            'api-key':      CONFIG.BREVO_API_KEY,
-            'content-type': 'application/json'
-          },
-          body: JSON.stringify({
-            sender: { name: 'Pagewise Books Admin', email: 'karanamharishharish@gmail.com' },
-            to:     [{ email: enteredEmail, name: 'Admin' }],
-            subject: 'Your Admin Login OTP',
-            htmlContent: `<p>Your verification code is: <strong>${generatedOtp}</strong></p>`
-          })
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ toEmail: enteredEmail, otp: generatedOtp })
         });
 
         const resData = await response.json().catch(() => ({}));
@@ -156,14 +149,14 @@
           if (otpSection) otpSection.style.display = 'block';
           startCountdown();
         } else {
-          console.error('Brevo API Error Details:', resData);
-          toast('❌ Brevo error: ' + (resData.message || response.statusText));
+          console.error('OTP send error:', resData);
+          toast('❌ Failed to send OTP: ' + (resData.error || response.statusText));
           sendOtpBtn.textContent = '📨 Send OTP to Email';
           sendOtpBtn.disabled    = false;
         }
       } catch (err) {
         console.error('Network Exception:', err);
-        toast('❌ Network error while calling Brevo API.');
+        toast('❌ Network error while sending OTP.');
         sendOtpBtn.textContent = '📨 Send OTP to Email';
         sendOtpBtn.disabled    = false;
       }

@@ -6,31 +6,25 @@ on:
 
 permissions:
   contents: read
-  pages: write
-  id-token: write
 
 jobs:
-  deploy:
+  validate:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Inject Secrets
-        run: |
-          sed -i "s/__BREVO_API_KEY_PLACEHOLDER__/${{ secrets.BREVO_API_KEY }}/g" js/data.js
-          sed -i "s/__GOOGLE_CLIENT_ID_PLACEHOLDER__/${{ secrets.GOOGLE_CLIENT_ID }}/g" js/data.js
-
-      - name: Setup Pages
-        uses: actions/configure-pages@v4
-
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
+      - name: Setup Node
+        uses: actions/setup-node@v4
         with:
-          path: '.'
+          node-version: '20'
 
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+      - name: Install dependencies
+        run: npm install
 
-        
+      - name: Confirm server.js exists
+        run: |
+          if [ ! -f server.js ]; then
+            echo "ERROR: server.js not found"; exit 1
+          fi
+          echo "OK: server.js found — Render will auto-deploy on this push."
