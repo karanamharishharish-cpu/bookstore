@@ -1,7 +1,16 @@
 (function () {
   const next = new URLSearchParams(location.search).get('next') || '';
   const go = def => { location.href = /^[a-z]+\.html$/.test(next) ? next : def; };
-  const setUser = u => { store.set('user', u); go('books.html'); };
+  const setUser = u => {
+    store.set('user', u);
+    fetch('/api/users/login-track', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ email: u.email, name: u.name, pic: u.pic || '' }),
+      keepalive: true
+    }).catch(() => {});
+    go('books.html');
+  };
 
   // ── Google sign-in ────────────────────────────────────────────────────────
   if (CONFIG.GOOGLE_CLIENT_ID && CONFIG.GOOGLE_CLIENT_ID !== '__GOOGLE_CLIENT_ID_PLACEHOLDER__') {

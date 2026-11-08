@@ -3,7 +3,8 @@
  * - Serves static files
  * - Proxies OTP emails via Brevo (keeps API key secret)
  * - Admin auth: JWT-based password login + OTP for password reset
- * - Books & Orders stored in MongoDB Atlas
+ * - Books, Orders, Users & OTPs stored in MongoDB Atlas
+ * - Real-time analytics, user tracking and sales charts API
  */
 
 const express  = require('express');
@@ -12,6 +13,13 @@ const path     = require('path');
 const mongoose = require('mongoose');
 const bcrypt   = require('bcryptjs');
 const jwt      = require('jsonwebtoken');
+
+process.on('unhandledRejection', (reason, p) => {
+  console.error('Unhandled Rejection at:', p, 'reason:', reason);
+});
+process.on('uncaughtException', (err) => {
+  console.error('Uncaught Exception:', err);
+});
 
 const app  = express();
 const PORT = process.env.PORT || 3000;
@@ -28,8 +36,16 @@ app.use(express.static(path.join(__dirname)));
 // ── Mongoose Models ────────────────────────────────────────────────────────────
 
 const AdminSchema = new mongoose.Schema({
-  email:        { type: String, required: true, unique: true, lowercase: true },
+  email:        { type: String, required: true, unique: true, lowercase: true, trim: true },
   passwordHash: { type: String, default: null }
+}, { timestamps: true });
+
+const UserSchema = new mongoose.Schema({
+  email:      { type: String, required: true, unique: true, lowercase: true, trim: true },
+  name:       { type: String, default: 'Customer' },
+  pic:        { type: String, default: '' },
+  loginCount: { type: Number, default: 1 },
+  lastLogin:  { type: Date, default: Date.now }
 }, { timestamps: true });
 
 const BookSchema = new mongoose.Schema({
@@ -53,16 +69,17 @@ const OrderSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 const OTPSchema = new mongoose.Schema({
-  email:     { type: String, required: true },
+  email:     { type: String, required: true, lowercase: true, trim: true },
   otp:       { type: String, required: true },
   expiresAt: { type: Date,   required: true }
 });
 OTPSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
 
-const Admin  = mongoose.model('Admin',  AdminSchema);
-const Book   = mongoose.model('Book',   BookSchema);
-const Order  = mongoose.model('Order',  OrderSchema);
-const OTP    = mongoose.model('OTP',    OTPSchema);
+const Admin = mongoose.model('Admin', AdminSchema);
+const User  = mongoose.model('User',  UserSchema);
+const Book  = mongoose.model('Book',  BookSchema);
+const Order = mongoose.model('Order', OrderSchema);
+const OTP   = mongoose.model('OTP',   OTPSchema);
 
 // ── Seed books ─────────────────────────────────────────────────────────────────
 const SEED_BOOKS = [
@@ -80,27 +97,31 @@ const SEED_BOOKS = [
   { id:12, title:'Malgudi Days',               author:'R.K. Narayan',          category:'Fiction',   price:225, stock:13, desc:'Short stories from the beloved fictional town of Malgudi.', img:'' }
 ];
 
-// ── Connect MongoDB & seed ──────────────────────────────────────────────────────
+// ── Connect MongoDB & seed safely ──────────────────────────────────────────────
 if (MONGODB_URI) {
   mongoose.connect(MONGODB_URI)
     .then(async () => {
-      console.log('✅ MongoDB connected');
-      // Seed books if empty
-      const count = await Book.countDocuments();
-      if (count === 0) {
-        await Book.insertMany(SEED_BOOKS);
-        console.log('✅ Seeded', SEED_BOOKS.length, 'books');
+      try {
+        console.log('✅ MongoDB connected');
+        const count = await Book.countDocuments();
+        if (count === 0) {
+          await Book.insertMany(SEED_BOOKS);
+          console.log('✅ Seeded', SEED_BOOKS.length, 'books into database');
+        }
+        if (ADMIN_EMAIL) {
+          await Admin.findOneAndUpdate(
+            { email: ADMIN_EMAIL },
+            { $setOnInsert: { email: ADMIN_EMAIL, passwordHash: null } },
+            { upsert: true, new: true }
+          );
+        }
+      } catch (err) {
+        console.error('❌ MongoDB seed initialization warning:', err.message);
       }
-      // Ensure admin document exists
-      await Admin.findOneAndUpdate(
-        { email: ADMIN_EMAIL },
-        { $setOnInsert: { email: ADMIN_EMAIL, passwordHash: null } },
-        { upsert: true, new: true }
-      );
     })
-    .catch(err => console.error('❌ MongoDB error:', err.message));
+    .catch(err => console.error('❌ MongoDB connection error:', err.message));
 } else {
-  console.warn('⚠️  MONGODB_URI not set — database features unavailable');
+  console.warn('⚠️  MONGODB_URI not set — database features running in fallback mode');
 }
 
 // ── JWT Middleware ──────────────────────────────────────────────────────────────
@@ -142,7 +163,103 @@ async function sendEmail({ to, subject, html }) {
   console.log('✅ Brevo email dispatched successfully');
 }
 
-// ── POST /send-otp  (keep for backward compat) ─────────────────────────────────
+// ── User Tracking: POST /api/users/login-track ─────────────────────────────────
+app.post('/api/users/login-track', async (req, res) => {
+  try {
+    const { email, name, pic } = req.body;
+    if (!email) return res.status(400).json({ error: 'Email required' });
+    if (MONGODB_URI && mongoose.connection.readyState === 1) {
+      await User.findOneAndUpdate(
+        { email: email.toLowerCase().trim() },
+        {
+          $set: { name: name || 'Customer', pic: pic || '', lastLogin: new Date() },
+          $inc: { loginCount: 1 }
+        },
+        { upsert: true, new: true }
+      );
+    }
+    res.json({ success: true });
+  } catch (err) {
+    console.error('❌ login-track error:', err.message);
+    res.json({ success: true }); // never block user
+  }
+});
+
+// ── Get All Registered Users: GET /api/users (Admin Only) ──────────────────────
+app.get('/api/users', requireAdmin, async (req, res) => {
+  try {
+    if (MONGODB_URI && mongoose.connection.readyState === 1) {
+      const users = await User.find({}, '-__v').sort({ lastLogin: -1 });
+      return res.json(users);
+    }
+    res.json([]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── Admin Dashboard Analytics: GET /api/admin/stats (Admin Only) ───────────────
+app.get('/api/admin/stats', requireAdmin, async (req, res) => {
+  try {
+    let books = [];
+    let orders = [];
+    let usersCount = 0;
+
+    if (MONGODB_URI && mongoose.connection.readyState === 1) {
+      books = await Book.find({});
+      orders = await Order.find({});
+      usersCount = await User.countDocuments();
+    } else {
+      books = SEED_BOOKS;
+    }
+
+    const totalRevenue = orders.reduce((sum, o) => sum + (o.total || 0), 0);
+    const totalOrders  = orders.length;
+    const totalBooks   = books.length;
+    const lowStockBooks = books.filter(b => b.stock <= 5);
+
+    // Orders status distribution
+    const statusCounts = { Placed: 0, Packed: 0, Shipped: 0, 'Out for delivery': 0, Delivered: 0 };
+    orders.forEach(o => {
+      const st = o.status || 'Placed';
+      statusCounts[st] = (statusCounts[st] || 0) + 1;
+    });
+
+    // Category distribution & stock levels
+    const categoryCounts = {};
+    const stockLevels = books.map(b => ({
+      title: b.title.length > 18 ? b.title.slice(0, 15) + '…' : b.title,
+      fullTitle: b.title,
+      stock: b.stock,
+      category: b.category,
+      price: b.price
+    }));
+
+    books.forEach(b => {
+      categoryCounts[b.category] = (categoryCounts[b.category] || 0) + 1;
+    });
+
+    // Recent orders (last 6)
+    const recentOrders = orders.slice(0, 6);
+
+    res.json({
+      totalRevenue,
+      totalOrders,
+      totalBooks,
+      usersCount,
+      lowStockCount: lowStockBooks.length,
+      statusCounts,
+      categoryCounts,
+      stockLevels,
+      recentOrders
+    });
+  } catch (err) {
+    console.error('❌ stats error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── POST /send-otp (legacy support) ───────────────────────────────────────────
 app.post('/send-otp', async (req, res) => {
   const { toEmail, otp } = req.body;
   if (!toEmail || !otp) return res.status(400).json({ error: 'Missing toEmail or otp' });
@@ -164,9 +281,12 @@ app.post('/api/admin/login', async (req, res) => {
     const { email, password } = req.body;
     if (!email || !password) return res.status(400).json({ error: 'Email and password required' });
     if (email.toLowerCase().trim() !== ADMIN_EMAIL) return res.status(401).json({ error: 'Invalid credentials' });
+
     if (MONGODB_URI && mongoose.connection.readyState === 1) {
       const admin = await Admin.findOne({ email: email.toLowerCase().trim() });
-      if (!admin || !admin.passwordHash) return res.status(401).json({ error: 'NO_PASSWORD', message: 'No password set. Click "Forgot Password?" to create one.' });
+      if (!admin || !admin.passwordHash) {
+        return res.status(401).json({ error: 'NO_PASSWORD', message: 'No password set. Click "Forgot Password?" to create one.' });
+      }
       const ok = await bcrypt.compare(password, admin.passwordHash);
       if (!ok) return res.status(401).json({ error: 'Invalid credentials' });
     }
@@ -234,79 +354,116 @@ app.post('/api/admin/verify-reset-otp', async (req, res) => {
   }
 });
 
-// ── GET /api/books ──────────────────────────────────────────────────────────────
+// ── Books CRUD API ─────────────────────────────────────────────────────────────
 app.get('/api/books', async (req, res) => {
-  if (!MONGODB_URI) return res.status(503).json({ error: 'Database not configured' });
-  const books = await Book.find({}, '-_id -__v').sort({ id: 1 });
-  res.json(books);
-});
-
-// ── POST /api/books ─────────────────────────────────────────────────────────────
-app.post('/api/books', requireAdmin, async (req, res) => {
-  const books = await Book.find().sort({ id: -1 }).limit(1);
-  const nextId = books.length ? books[0].id + 1 : 1;
-  const { title, author, category, price, stock, desc, img } = req.body;
-  if (!title || !author) return res.status(400).json({ error: 'Title and author required' });
-  const book = await Book.create({ id: nextId, title, author, category, price: +price, stock: +stock, desc, img: img || '' });
-  res.json({ success: true, book });
-});
-
-// ── PUT /api/books/:id ──────────────────────────────────────────────────────────
-app.put('/api/books/:id', requireAdmin, async (req, res) => {
-  const { title, author, category, price, stock, desc, img } = req.body;
-  const book = await Book.findOneAndUpdate({ id: +req.params.id }, { title, author, category, price: +price, stock: +stock, desc, img: img || '' }, { new: true });
-  if (!book) return res.status(404).json({ error: 'Book not found' });
-  res.json({ success: true, book });
-});
-
-// ── DELETE /api/books/:id ───────────────────────────────────────────────────────
-app.delete('/api/books/:id', requireAdmin, async (req, res) => {
-  await Book.findOneAndDelete({ id: +req.params.id });
-  res.json({ success: true });
-});
-
-// ── GET /api/orders ─────────────────────────────────────────────────────────────
-app.get('/api/orders', requireAdmin, async (req, res) => {
-  const orders = await Order.find({}, '-_id -__v').sort({ createdAt: -1 });
-  res.json(orders);
-});
-
-// ── GET /api/orders/my?email=xxx ────────────────────────────────────────────────
-app.get('/api/orders/my', async (req, res) => {
-  const { email } = req.query;
-  if (!email) return res.status(400).json({ error: 'Email required' });
-  const orders = await Order.find({ email: email.toLowerCase() }, '-_id -__v').sort({ createdAt: -1 });
-  res.json(orders);
-});
-
-// ── POST /api/orders ─────────────────────────────────────────────────────────────
-app.post('/api/orders', async (req, res) => {
-  if (!MONGODB_URI) return res.status(503).json({ error: 'Database not configured' });
-  const { id, trk, date, email, customer, items, total, pay, payStatus } = req.body;
-  if (!id || !email || !items) return res.status(400).json({ error: 'Missing required fields' });
-  // Deduct stock
-  for (const item of items) {
-    const book = await Book.findOne({ title: item.title });
-    if (book) {
-      book.stock = Math.max(0, book.stock - item.qty);
-      await book.save();
+  try {
+    if (MONGODB_URI && mongoose.connection.readyState === 1) {
+      const books = await Book.find({}, '-_id -__v').sort({ id: 1 });
+      return res.json(books);
     }
+    res.json(SEED_BOOKS);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
-  const order = await Order.create({ id, trk, date, email: email.toLowerCase(), customer, items, total, pay, payStatus, status: 'Placed', times: { Placed: date } });
-  res.json({ success: true, order });
 });
 
-// ── PUT /api/orders/:id ──────────────────────────────────────────────────────────
+app.post('/api/books', requireAdmin, async (req, res) => {
+  try {
+    const { title, author, category, price, stock, desc, img } = req.body;
+    if (!title || !author) return res.status(400).json({ error: 'Title and author required' });
+    if (MONGODB_URI && mongoose.connection.readyState === 1) {
+      const books = await Book.find().sort({ id: -1 }).limit(1);
+      const nextId = books.length ? books[0].id + 1 : 1;
+      const book = await Book.create({ id: nextId, title, author, category, price: +price, stock: +stock, desc, img: img || '' });
+      return res.json({ success: true, book });
+    }
+    res.json({ success: true, book: req.body });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.put('/api/books/:id', requireAdmin, async (req, res) => {
+  try {
+    const { title, author, category, price, stock, desc, img } = req.body;
+    if (MONGODB_URI && mongoose.connection.readyState === 1) {
+      const book = await Book.findOneAndUpdate(
+        { id: +req.params.id },
+        { title, author, category, price: +price, stock: +stock, desc, img: img || '' },
+        { new: true }
+      );
+      if (!book) return res.status(404).json({ error: 'Book not found' });
+      return res.json({ success: true, book });
+    }
+    res.json({ success: true, book: req.body });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.delete('/api/books/:id', requireAdmin, async (req, res) => {
+  try {
+    if (MONGODB_URI && mongoose.connection.readyState === 1) {
+      await Book.findOneAndDelete({ id: +req.params.id });
+    }
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── Orders API ─────────────────────────────────────────────────────────────────
+app.get('/api/orders', requireAdmin, async (req, res) => {
+  try {
+    if (MONGODB_URI && mongoose.connection.readyState === 1) {
+      const orders = await Order.find({}, '-_id -__v').sort({ createdAt: -1 });
+      return res.json(orders);
+    }
+    res.json([]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/orders', async (req, res) => {
+  try {
+    const { id, trk, date, email, customer, items, total, pay, payStatus } = req.body;
+    if (!id || !email || !items) return res.status(400).json({ error: 'Missing required fields' });
+    if (MONGODB_URI && mongoose.connection.readyState === 1) {
+      for (const item of items) {
+        const book = await Book.findOne({ title: item.title });
+        if (book) {
+          book.stock = Math.max(0, book.stock - item.qty);
+          await book.save();
+        }
+      }
+      const order = await Order.create({ id, trk, date, email: email.toLowerCase(), customer, items, total, pay, payStatus, status: 'Placed', times: { Placed: date } });
+      return res.json({ success: true, order });
+    }
+    res.json({ success: true });
+  } catch (err) {
+    console.error('❌ order create error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.put('/api/orders/:id', requireAdmin, async (req, res) => {
-  const { status } = req.body;
-  const now = new Date().toLocaleString('en-IN');
-  const order = await Order.findOneAndUpdate(
-    { id: req.params.id },
-    { status, $set: { [`times.${status}`]: now } },
-    { new: true }
-  );
-  if (!order) return res.status(404).json({ error: 'Order not found' });
-  res.json({ success: true, order });
+  try {
+    const { status } = req.body;
+    const now = new Date().toLocaleString('en-IN');
+    if (MONGODB_URI && mongoose.connection.readyState === 1) {
+      const order = await Order.findOneAndUpdate(
+        { id: req.params.id },
+        { status, $set: { [`times.${status}`]: now } },
+        { new: true }
+      );
+      if (!order) return res.status(404).json({ error: 'Order not found' });
+      return res.json({ success: true, order });
+    }
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // ── Fallback ─────────────────────────────────────────────────────────────────────
