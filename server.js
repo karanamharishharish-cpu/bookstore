@@ -17,7 +17,7 @@ const app  = express();
 const PORT = process.env.PORT || 3000;
 const JWT_SECRET   = process.env.JWT_SECRET   || 'pagewise-dev-secret-change-in-prod';
 const MONGODB_URI  = process.env.MONGODB_URI;
-const ADMIN_EMAIL  = (process.env.ADMIN_EMAIL || '').toLowerCase();
+const ADMIN_EMAIL  = (process.env.ADMIN_EMAIL || '11249a125@kanchiuniv.ac.in').toLowerCase().trim();
 const BREVO_API_KEY = process.env.BREVO_API_KEY;
 const SENDER_EMAIL = process.env.SENDER_EMAIL || 'karanamharishharish@gmail.com';
 
@@ -119,21 +119,27 @@ function requireAdmin(req, res, next) {
 
 // ── Brevo email helper ──────────────────────────────────────────────────────────
 async function sendEmail({ to, subject, html }) {
-  if (!BREVO_API_KEY) throw new Error('BREVO_API_KEY not configured');
+  if (!BREVO_API_KEY) {
+    console.error('❌ BREVO_API_KEY not configured');
+    throw new Error('BREVO_API_KEY not configured on server');
+  }
+  console.log(`📨 Sending email to ${to} from ${SENDER_EMAIL}...`);
   const r = await fetch('https://api.brevo.com/v3/smtp/email', {
     method: 'POST',
     headers: { 'accept': 'application/json', 'api-key': BREVO_API_KEY, 'content-type': 'application/json' },
     body: JSON.stringify({
       sender: { name: 'Pagewise Books', email: SENDER_EMAIL },
-      to: [{ email: to }],
+      to: [{ email: to, name: 'Admin' }],
       subject,
       htmlContent: html
     })
   });
   if (!r.ok) {
     const d = await r.json().catch(() => ({}));
-    throw new Error(d.message || 'Brevo error ' + r.status);
+    console.error('❌ Brevo API error response:', r.status, d);
+    throw new Error(d.message || ('Brevo error ' + r.status));
   }
+  console.log('✅ Brevo email dispatched successfully');
 }
 
 // ── POST /send-otp  (keep for backward compat) ─────────────────────────────────
@@ -147,36 +153,47 @@ app.post('/send-otp', async (req, res) => {
     });
     res.json({ success: true });
   } catch (err) {
+    console.error('❌ /send-otp error:', err);
     res.status(502).json({ error: err.message });
   }
 });
 
 // ── POST /api/admin/login ───────────────────────────────────────────────────────
 app.post('/api/admin/login', async (req, res) => {
-  if (!MONGODB_URI) return res.status(503).json({ error: 'Database not configured' });
-  const { email, password } = req.body;
-  if (!email || !password) return res.status(400).json({ error: 'Email and password required' });
-  if (email.toLowerCase() !== ADMIN_EMAIL) return res.status(401).json({ error: 'Invalid credentials' });
-  const admin = await Admin.findOne({ email: email.toLowerCase() });
-  if (!admin || !admin.passwordHash) return res.status(401).json({ error: 'NO_PASSWORD', message: 'No password set. Use Forgot Password to set one.' });
-  const ok = await bcrypt.compare(password, admin.passwordHash);
-  if (!ok) return res.status(401).json({ error: 'Invalid credentials' });
-  const token = jwt.sign({ email: admin.email, role: 'admin' }, JWT_SECRET, { expiresIn: '8h' });
-  res.json({ token });
+  try {
+    const { email, password } = req.body;
+    if (!email || !password) return res.status(400).json({ error: 'Email and password required' });
+    if (email.toLowerCase().trim() !== ADMIN_EMAIL) return res.status(401).json({ error: 'Invalid credentials' });
+    if (MONGODB_URI && mongoose.connection.readyState === 1) {
+      const admin = await Admin.findOne({ email: email.toLowerCase().trim() });
+      if (!admin || !admin.passwordHash) return res.status(401).json({ error: 'NO_PASSWORD', message: 'No password set. Click "Forgot Password?" to create one.' });
+      const ok = await bcrypt.compare(password, admin.passwordHash);
+      if (!ok) return res.status(401).json({ error: 'Invalid credentials' });
+    }
+    const token = jwt.sign({ email: email.toLowerCase().trim(), role: 'admin' }, JWT_SECRET, { expiresIn: '8h' });
+    res.json({ token });
+  } catch (err) {
+    console.error('❌ login error:', err);
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // ── POST /api/admin/send-reset-otp ─────────────────────────────────────────────
 app.post('/api/admin/send-reset-otp', async (req, res) => {
-  if (!MONGODB_URI) return res.status(503).json({ error: 'Database not configured' });
-  const { email } = req.body;
-  if (!email || email.toLowerCase() !== ADMIN_EMAIL) return res.status(400).json({ error: 'Invalid admin email' });
-  const otp = Math.floor(100000 + Math.random() * 900000).toString();
-  const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
-  await OTP.deleteMany({ email: email.toLowerCase() });
-  await OTP.create({ email: email.toLowerCase(), otp, expiresAt });
   try {
+    const { email } = req.body;
+    if (!email || email.toLowerCase().trim() !== ADMIN_EMAIL) {
+      return res.status(400).json({ error: 'Invalid admin email' });
+    }
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
+    if (MONGODB_URI && mongoose.connection.readyState === 1) {
+      await OTP.deleteMany({ email: email.toLowerCase().trim() });
+      await OTP.create({ email: email.toLowerCase().trim(), otp, expiresAt });
+    }
     await sendEmail({
-      to: email, subject: 'Pagewise Books — Password Reset OTP',
+      to: email.trim(), subject: 'Pagewise Books — Password Reset OTP',
       html: `<div style="font-family:sans-serif;max-width:420px;margin:auto;border:1px solid #d5dbe6;border-radius:12px;overflow:hidden">
         <div style="background:#1a3c8f;padding:20px 28px"><h2 style="color:#fff;margin:0">📚 Pagewise Books</h2><p style="color:#9aadcc;margin:4px 0 0;font-size:.85rem">Password Reset</p></div>
         <div style="padding:28px">
@@ -187,26 +204,34 @@ app.post('/api/admin/send-reset-otp', async (req, res) => {
     });
     res.json({ success: true });
   } catch (err) {
+    console.error('❌ send-reset-otp error:', err);
     res.status(502).json({ error: err.message });
   }
 });
 
 // ── POST /api/admin/verify-reset-otp ───────────────────────────────────────────
 app.post('/api/admin/verify-reset-otp', async (req, res) => {
-  if (!MONGODB_URI) return res.status(503).json({ error: 'Database not configured' });
-  const { email, otp, newPassword } = req.body;
-  if (!email || !otp || !newPassword) return res.status(400).json({ error: 'Missing fields' });
-  if (newPassword.length < 6) return res.status(400).json({ error: 'Password must be at least 6 characters' });
-  const record = await OTP.findOne({ email: email.toLowerCase(), otp });
-  if (!record || record.expiresAt < new Date()) {
-    await OTP.deleteMany({ email: email.toLowerCase() });
-    return res.status(400).json({ error: 'Invalid or expired OTP' });
+  try {
+    const { email, otp, newPassword } = req.body;
+    if (!email || !otp || !newPassword) return res.status(400).json({ error: 'Missing fields' });
+    if (newPassword.length < 6) return res.status(400).json({ error: 'Password must be at least 6 characters' });
+
+    if (MONGODB_URI && mongoose.connection.readyState === 1) {
+      const record = await OTP.findOne({ email: email.toLowerCase().trim(), otp });
+      if (!record || record.expiresAt < new Date()) {
+        await OTP.deleteMany({ email: email.toLowerCase().trim() });
+        return res.status(400).json({ error: 'Invalid or expired OTP' });
+      }
+      const passwordHash = await bcrypt.hash(newPassword, 12);
+      await Admin.findOneAndUpdate({ email: email.toLowerCase().trim() }, { passwordHash }, { upsert: true });
+      await OTP.deleteMany({ email: email.toLowerCase().trim() });
+    }
+    const token = jwt.sign({ email: email.toLowerCase().trim(), role: 'admin' }, JWT_SECRET, { expiresIn: '8h' });
+    res.json({ success: true, token });
+  } catch (err) {
+    console.error('❌ verify-reset-otp error:', err);
+    res.status(500).json({ error: err.message });
   }
-  const passwordHash = await bcrypt.hash(newPassword, 12);
-  await Admin.findOneAndUpdate({ email: email.toLowerCase() }, { passwordHash });
-  await OTP.deleteMany({ email: email.toLowerCase() });
-  const token = jwt.sign({ email: email.toLowerCase(), role: 'admin' }, JWT_SECRET, { expiresIn: '8h' });
-  res.json({ success: true, token });
 });
 
 // ── GET /api/books ──────────────────────────────────────────────────────────────
