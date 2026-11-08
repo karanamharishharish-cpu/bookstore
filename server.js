@@ -25,8 +25,9 @@ app.post('/send-otp', async (req, res) => {
     return res.status(400).json({ error: 'Missing toEmail or otp' });
   }
 
-  const BREVO_API_KEY = process.env.BREVO_API_KEY;
-  const SENDER_EMAIL  = process.env.ADMIN_EMAIL || 'karanamharishharish@gmail.com';
+  const BREVO_API_KEY  = process.env.BREVO_API_KEY;
+  const SENDER_EMAIL   = process.env.SENDER_EMAIL || 'karanamharishharish@gmail.com';
+  const SENDER_NAME    = 'Pagewise Books';
 
   if (!BREVO_API_KEY) {
     return res.status(500).json({ error: 'BREVO_API_KEY not set on server' });
@@ -41,7 +42,7 @@ app.post('/send-otp', async (req, res) => {
         'content-type': 'application/json'
       },
       body: JSON.stringify({
-        sender:      { name: 'Pagewise Books Admin', email: SENDER_EMAIL },
+        sender:      { name: SENDER_NAME, email: SENDER_EMAIL },
         to:          [{ email: toEmail, name: 'Admin' }],
         subject:     'Your Admin Login OTP',
         htmlContent: `<p>Your verification code is: <strong>${otp}</strong></p>
