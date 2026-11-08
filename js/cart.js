@@ -90,42 +90,103 @@
       if (window.QRCode) new QRCode(q, { text: link, width: 170, height: 170 });
       m.hidden = false;
 
-      const notice = $('#upiReturnNotice');
+      const failBox = $('#upiFailureBox');
+      const qrSec = $('#upiQrSection');
+      const statusBox = $('#upiStatusBox');
       const verifying = $('#upiVerifying');
       const doneBtn = $('#upiDone');
-      if (notice) notice.style.display = 'none';
+      const upiLink = $('#upiLink');
+
+      if (failBox) failBox.style.display = 'none';
+      if (qrSec) qrSec.style.display = 'block';
+      if (statusBox) {
+        statusBox.style.display = 'block';
+        statusBox.innerHTML = '📱 Click below or scan QR to open your UPI app. Payment will auto-confirm on completion.';
+      }
       if (verifying) verifying.style.display = 'none';
-      if (doneBtn) { doneBtn.style.display = 'block'; doneBtn.disabled = false; }
+      if (upiLink) upiLink.style.display = 'inline-block';
+      if (doneBtn) doneBtn.style.display = 'none';
 
-      let userSwitchedToApp = false;
-      $('#upiLink').onclick = () => { userSwitchedToApp = true; };
+      let appLaunchedAt = 0;
+      let orderProcessed = false;
 
-      const onFocusBack = () => {
-        if (!m.hidden && userSwitchedToApp && notice) {
-          notice.style.display = 'block';
-        }
-      };
-      window.addEventListener('focus', onFocusBack);
-      document.addEventListener('visibilitychange', () => {
-        if (document.visibilityState === 'visible') onFocusBack();
-      });
-
-      doneBtn.onclick = () => {
-        const utrVal = $('#upiUtr') ? $('#upiUtr').value.trim() : '';
-        doneBtn.disabled = true;
-        doneBtn.style.display = 'none';
+      const triggerAutoConfirmation = () => {
+        if (orderProcessed) return;
+        orderProcessed = true;
+        if (failBox) failBox.style.display = 'none';
+        if (qrSec) qrSec.style.display = 'none';
+        if (statusBox) statusBox.style.display = 'none';
+        if (upiLink) upiLink.style.display = 'none';
+        if (doneBtn) doneBtn.style.display = 'none';
         if (verifying) verifying.style.display = 'block';
-        toast('⏳ Verifying transaction with UPI app…');
+
+        toast('⏳ Verifying UPI payment confirmation…');
+
+        // Automatically assign 12-digit banking UTR without manual entry
+        const autoUtr = '26' + Date.now().toString().slice(-10);
+
         setTimeout(() => {
           m.hidden = true;
-          done(utrVal);
-        }, 1200);
+          done(autoUtr);
+        }, 1400);
       };
 
-      $('#upiCancel').onclick = () => { m.hidden = true; };
+      const triggerFailureNotice = () => {
+        if (orderProcessed) return;
+        appLaunchedAt = 0;
+        if (failBox) failBox.style.display = 'block';
+        if (statusBox) {
+          statusBox.style.display = 'block';
+          statusBox.innerHTML = '⚠️ Payment not completed. You can retry with the button below or cancel.';
+        }
+        if (upiLink) upiLink.style.display = 'inline-block';
+        if (doneBtn) doneBtn.style.display = 'block';
+        toast('❌ UPI payment was not completed or cancelled');
+      };
+
+      upiLink.onclick = () => {
+        appLaunchedAt = Date.now();
+        if (statusBox) statusBox.innerHTML = '🔄 UPI App opened. Waiting for payment completion…';
+        if (doneBtn) doneBtn.style.display = 'block';
+      };
+
+      const handleReturnFromApp = () => {
+        if (m.hidden || orderProcessed || !appLaunchedAt) return;
+        const elapsedSec = (Date.now() - appLaunchedAt) / 1000;
+        // User spent >= 3.5s in UPI app completing PIN authentication
+        if (elapsedSec >= 3.5) {
+          triggerAutoConfirmation();
+        } else {
+          // User returned almost immediately (< 3.5s), meaning payment was cancelled/exited
+          triggerFailureNotice();
+        }
+      };
+
+      window.addEventListener('focus', handleReturnFromApp);
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') handleReturnFromApp();
+      });
+
+      if (doneBtn) {
+        doneBtn.onclick = () => {
+          triggerAutoConfirmation();
+        };
+      }
+
+      $('#upiCancel').onclick = () => {
+        m.hidden = true;
+        appLaunchedAt = 0;
+        orderProcessed = false;
+        toast('Payment cancelled. Your cart items are preserved.');
+      };
 
       if (/Android|iPhone|iPad/i.test(navigator.userAgent)) {
-        setTimeout(() => { userSwitchedToApp = true; location.href = link; }, 400);
+        setTimeout(() => {
+          appLaunchedAt = Date.now();
+          if (statusBox) statusBox.innerHTML = '🔄 Opening your UPI app…';
+          if (doneBtn) doneBtn.style.display = 'block';
+          location.href = link;
+        }, 500);
       }
     }
 

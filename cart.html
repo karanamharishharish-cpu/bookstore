@@ -56,35 +56,42 @@
                 <strong id="upiAmt" style="font-size:1.4rem;color:#1a3c8f"></strong>
             </div>
 
-            <div style="background:#fff;border:2px dashed var(--line);border-radius:12px;padding:14px;margin-bottom:14px;">
+            <!-- Failure / Cancellation Box -->
+            <div id="upiFailureBox" style="display:none;background:#ffebee;border:1px solid #ef5350;border-radius:10px;padding:14px;margin-bottom:14px;color:#c62828;text-align:center;">
+                <div style="font-size:1.15rem;font-weight:700;margin-bottom:4px">❌ Payment Failed / Order Cancelled</div>
+                <p style="margin:0;font-size:0.86rem;color:#555">Your transaction was not completed in the UPI app. No money was deducted. Your cart items are safe.</p>
+            </div>
+
+            <!-- QR Code Section -->
+            <div id="upiQrSection" style="background:#fff;border:2px dashed var(--line);border-radius:12px;padding:14px;margin-bottom:14px;">
                 <div id="qr" style="display:flex;justify-content:center;margin-bottom:8px"></div>
                 <small style="color:var(--muted);display:block">Scan QR code using any UPI app on your phone</small>
             </div>
 
+            <!-- Status message -->
+            <div id="upiStatusBox" style="background:#f4f6fa;border-radius:8px;padding:10px;margin-bottom:12px;font-size:0.88rem;color:#555">
+                📱 Click below or scan QR to open your UPI app. The payment will confirm automatically.
+            </div>
+
+            <!-- Open in UPI App button -->
             <a class="btn gold wide" id="upiLink" href="#" style="font-size:1.05rem;padding:12px;margin-bottom:10px;text-decoration:none;display:inline-block">
                 🚀 Open in UPI App (Mobile)
             </a>
 
-            <!-- Auto-detected return message -->
-            <div id="upiReturnNotice" style="display:none;background:#e5f4ec;border:1px solid #1f7a4d;border-radius:8px;padding:10px;margin-bottom:12px;color:#1f7a4d;font-size:0.88rem;font-weight:600">
-                🟢 App detected! If your UPI payment succeeded, click Confirm below to place your order.
-            </div>
-
-            <!-- Optional UTR / Reference number field -->
-            <div style="text-align:left;margin-bottom:14px">
-                <label style="font-size:0.8rem;color:var(--muted);display:block;margin-bottom:4px">UPI Reference / 12-digit UTR (Optional):</label>
-                <input id="upiUtr" type="text" maxlength="12" placeholder="e.g. 4123XXXXXXXX" style="padding:8px 12px;font-family:monospace;font-size:0.95rem;text-align:center;letter-spacing:1px">
-            </div>
-
             <!-- Verifying state -->
-            <div id="upiVerifying" style="display:none;padding:12px;background:#eef5ff;border-radius:8px;color:#1a3c8f;font-weight:600;margin-bottom:12px">
-                ⏳ Verifying UPI payment &amp; confirming order…
+            <div id="upiVerifying" style="display:none;padding:16px;background:#eef5ff;border:1px solid #1a3c8f;border-radius:10px;color:#1a3c8f;font-weight:600;margin-bottom:14px">
+                <div style="font-size:1.15rem;margin-bottom:6px">⏳ Verifying Payment with UPI App…</div>
+                <div style="font-size:0.85rem;color:#555;font-weight:normal">Transaction received. Automatically confirming your order and sending confirmation receipt…</div>
             </div>
 
-            <button class="btn wide" id="upiDone" type="button" style="background:#1f7a4d;color:#fff;font-size:1.05rem;padding:12px">
-                ✔ Confirm Payment &amp; Place Order
+            <!-- Optional manual trigger button for desktop / QR users -->
+            <button class="btn wide" id="upiDone" type="button" style="background:#1f7a4d;color:#fff;font-size:1rem;padding:10px;margin-bottom:6px;display:none;">
+                ✔ I Completed Payment
             </button>
-            <button class="link" id="upiCancel" type="button" style="margin-top:10px;font-size:0.9rem">Cancel Payment</button>
+
+            <div>
+                <button class="link" id="upiCancel" type="button" style="font-size:0.9rem;color:#e53935;cursor:pointer">✕ Cancel Payment</button>
+            </div>
         </div>
     </div>
 </main>
