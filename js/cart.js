@@ -58,6 +58,12 @@
       };
       const os = store.get('orders', []); os.unshift(o);
       store.set('orders', os); store.set('cart', []);
+      fetch('/api/orders', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(o),
+        keepalive: true
+      }).catch(() => {});
       location.href = 'orders.html?new=' + o.id;
     }
 

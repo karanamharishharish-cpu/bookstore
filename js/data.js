@@ -34,36 +34,57 @@ const store = {
     set(k, v) { localStorage.setItem(k, JSON.stringify(v)); }
 };
 
-const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&', '<': '<', '>': '>', '"': '"', "'": "'" }[c]));
-const money = n => '₹' + Number(n).toLocaleString('en-IN');
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const money = n => '\u20B9' + Number(n).toLocaleString('en-IN');
 const getUser = () => store.get('user', null);
-const isAdmin = () => sessionStorage.getItem('adm') === '1';
+
+// ── Admin JWT helpers (global — NOT inside an IIFE) ────────────────────────────
+function getAdminToken() { return sessionStorage.getItem('adm_token') || null; }
+function setAdminToken(t) { sessionStorage.setItem('adm_token', t); sessionStorage.setItem('adm', '1'); }
+function clearAdminToken() { sessionStorage.removeItem('adm_token'); sessionStorage.removeItem('adm'); }
+function isAdmin() {
+    const t = getAdminToken();
+    if (!t) return false;
+    try {
+        const payload = JSON.parse(atob(t.split('.')[1]));
+        return payload.role === 'admin' && payload.exp * 1000 > Date.now();
+    } catch { return false; }
+}
+
+// ── API request headers helper (global) ────────────────────────────────────────
+function apiHeaders() {
+    const t = getAdminToken();
+    return { 'content-type': 'application/json', ...(t ? { 'authorization': 'Bearer ' + t } : {}) };
+}
 
 async function sha256(s) {
     const b = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s));
     return [...new Uint8Array(b)].map(x => x.toString(16).padStart(2, '0')).join('');
 }
 
-function getBooks() { 
-    let b = store.get('books', null); 
-    if (!b) { b = SEED; store.set('books', b); } 
-    return b; 
+function getBooks() {
+    let b = store.get('books', null);
+    if (!b) { b = SEED; store.set('books', b); }
+    return b;
 }
 
-function saveBooks(b) { store.set('books', b); }
+function saveBooks(b) {
+    store.set('books', b);
+    // API sync happens directly in admin.js
+}
 
 function toast(m) {
     const t = document.createElement('div');
-    t.className = 'toast'; 
-    t.setAttribute('role', 'status'); 
+    t.className = 'toast';
+    t.setAttribute('role', 'status');
     t.textContent = m;
-    document.body.appendChild(t); 
+    document.body.appendChild(t);
     setTimeout(() => t.remove(), 2400);
 }
 
-function updateCount() { 
-    const el = $('#cc'); 
-    if (el) el.textContent = store.get('cart', []).reduce((s, c) => s + c.qty, 0); 
+function updateCount() {
+    const el = $('#cc');
+    if (el) el.textContent = store.get('cart', []).reduce((s, c) => s + c.qty, 0);
 }
 
 function addToCart(id) {
@@ -142,23 +163,27 @@ function layout() {
     const page = location.pathname.split('/').pop() || 'index.html', u = getUser();
     const links = [['index.html', 'Home'], ['books.html', 'Books'], ['cart.html', 'Cart'], ['orders.html', 'Orders']];
     if (isAdmin()) links.push(['admin.html', 'Admin']);
-    
+
     const acct = u ? `<span class="who">${esc(u.name.split(' ')[0])}</span><button class="navbtn" id="signout">Sign out</button>`
     : isAdmin() ? `<a href="admin.html">Admin</a><button class="navbtn" id="signout">Sign out</button>`
     : `<a href="login.html" class="${page === 'login.html' ? 'on' : ''}">Sign in</a>`;
-    
+
     const navEl = $('#nav');
     if (navEl) {
         navEl.innerHTML = `<header class="bar"><a class="logo" href="index.html">${CONFIG.STORE_NAME}</a><nav>${links.map(([h, t]) => `<a href="${h}" class="${page === h ? 'on' : ''}">${t}${h === 'cart.html' ? ' <span id="cc">0</span>' : ''}</a>`).join('')}${acct}</nav></header>`;
     }
-    
+
     const footEl = $('#foot');
     if (footEl) {
         footEl.innerHTML = `<footer>${CONFIG.STORE_NAME}, a student e-commerce project. Released under the MIT License.</footer>`;
     }
-    
+
     const so = $('#signout');
-    if (so) so.onclick = () => { localStorage.removeItem('user'); sessionStorage.removeItem('adm'); location.href = 'index.html'; };
+    if (so) so.onclick = () => {
+        localStorage.removeItem('user');
+        clearAdminToken();
+        location.href = 'index.html';
+    };
     updateCount();
 }
 
