@@ -64,6 +64,7 @@ const OrderSchema = new mongoose.Schema({
   total:      Number,
   pay:        String,
   payStatus:  String,
+  utr:        { type: String, default: '' },
   status:     { type: String, default: 'Placed' },
   times:      { type: mongoose.Schema.Types.Mixed, default: {} }
 }, { timestamps: true });
@@ -371,13 +372,18 @@ app.post('/api/books', requireAdmin, async (req, res) => {
   try {
     const { title, author, category, price, stock, desc, img } = req.body;
     if (!title || !author) return res.status(400).json({ error: 'Title and author required' });
+
+    let book = null;
     if (MONGODB_URI && mongoose.connection.readyState === 1) {
       const books = await Book.find().sort({ id: -1 }).limit(1);
       const nextId = books.length ? books[0].id + 1 : 1;
-      const book = await Book.create({ id: nextId, title, author, category, price: +price, stock: +stock, desc, img: img || '' });
-      return res.json({ success: true, book });
+      book = await Book.create({ id: nextId, title, author, category, price: +price, stock: +stock, desc, img: img || '' });
+    } else {
+      const nextId = SEED_BOOKS.length ? Math.max(...SEED_BOOKS.map(b => b.id)) + 1 : 1;
+      book = { id: nextId, title, author, category, price: +price, stock: +stock, desc, img: img || '' };
+      SEED_BOOKS.push(book);
     }
-    res.json({ success: true, book: req.body });
+    return res.json({ success: true, book });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -395,6 +401,10 @@ app.put('/api/books/:id', requireAdmin, async (req, res) => {
       if (!book) return res.status(404).json({ error: 'Book not found' });
       return res.json({ success: true, book });
     }
+    const idx = SEED_BOOKS.findIndex(b => b.id === +req.params.id);
+    if (idx !== -1) {
+      SEED_BOOKS[idx] = { id: +req.params.id, title, author, category, price: +price, stock: +stock, desc, img: img || '' };
+    }
     res.json({ success: true, book: req.body });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -406,6 +416,8 @@ app.delete('/api/books/:id', requireAdmin, async (req, res) => {
     if (MONGODB_URI && mongoose.connection.readyState === 1) {
       await Book.findOneAndDelete({ id: +req.params.id });
     }
+    const idx = SEED_BOOKS.findIndex(b => b.id === +req.params.id);
+    if (idx !== -1) SEED_BOOKS.splice(idx, 1);
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -427,8 +439,9 @@ app.get('/api/orders', requireAdmin, async (req, res) => {
 
 app.post('/api/orders', async (req, res) => {
   try {
-    const { id, trk, date, email, customer, items, total, pay, payStatus } = req.body;
+    const { id, trk, date, email, customer, items, total, pay, payStatus, utr } = req.body;
     if (!id || !email || !items) return res.status(400).json({ error: 'Missing required fields' });
+    let order = null;
     if (MONGODB_URI && mongoose.connection.readyState === 1) {
       for (const item of items) {
         const book = await Book.findOne({ title: item.title });
@@ -437,10 +450,68 @@ app.post('/api/orders', async (req, res) => {
           await book.save();
         }
       }
-      const order = await Order.create({ id, trk, date, email: email.toLowerCase(), customer, items, total, pay, payStatus, status: 'Placed', times: { Placed: date } });
-      return res.json({ success: true, order });
+      order = await Order.create({
+        id, trk, date,
+        email: email.toLowerCase(),
+        customer, items, total, pay, payStatus,
+        utr: utr || '',
+        status: 'Placed',
+        times: { Placed: date }
+      });
     }
-    res.json({ success: true });
+
+    // Send customer order confirmation receipt email via Brevo
+    if (email && BREVO_API_KEY) {
+      try {
+        const itemsListHtml = (items || []).map(i =>
+          `<tr><td style="padding:8px 0;border-bottom:1px solid #eee;"><strong>${i.title}</strong></td><td style="text-align:center;padding:8px 0;border-bottom:1px solid #eee;">&times; ${i.qty}</td><td style="text-align:right;padding:8px 0;border-bottom:1px solid #eee;">₹${Number((i.price || 0) * (i.qty || 1)).toLocaleString('en-IN')}</td></tr>`
+        ).join('');
+
+        sendEmail({
+          to: email,
+          subject: `📚 Order Confirmed! #${id} — Pagewise Books`,
+          html: `
+            <div style="font-family:sans-serif;max-width:520px;margin:auto;border:1px solid #d5dbe6;border-radius:12px;overflow:hidden">
+              <div style="background:#1a3c8f;padding:24px;color:#fff">
+                <h2 style="margin:0;font-size:1.4rem">📚 Pagewise Books</h2>
+                <p style="margin:6px 0 0;font-size:0.9rem;color:#9aadcc">Order Confirmation &amp; Receipt</p>
+              </div>
+              <div style="padding:28px">
+                <p style="font-size:1.05rem;margin:0 0 12px">Hi <strong>${customer && customer.name ? customer.name : 'Customer'}</strong>,</p>
+                <p style="color:#555;margin:0 0 16px">Thank you for your order! Your payment via <strong>${pay || 'UPI'}</strong> is confirmed and your books are being prepared for dispatch.</p>
+                <div style="background:#f4f6fa;border-radius:8px;padding:16px;margin-bottom:20px;font-size:0.9rem;line-height:1.6">
+                  <p style="margin:0"><strong>Order ID:</strong> ${id}</p>
+                  <p style="margin:0"><strong>Tracking Code:</strong> ${trk || '-'}</p>
+                  <p style="margin:0"><strong>Payment Status:</strong> <span style="color:#1f7a4d;font-weight:700">${payStatus || 'Confirmed'}</span></p>
+                  ${utr ? `<p style="margin:0"><strong>UPI Reference / UTR:</strong> ${utr}</p>` : ''}
+                  <p style="margin:0"><strong>Delivery Address:</strong> ${customer && customer.addr ? customer.addr : '-'}</p>
+                </div>
+                <table style="width:100%;border-collapse:collapse;margin-bottom:18px">
+                  <thead>
+                    <tr style="color:#777;font-size:0.85rem;text-align:left">
+                      <th style="padding-bottom:8px">Book</th>
+                      <th style="text-align:center;padding-bottom:8px">Qty</th>
+                      <th style="text-align:right;padding-bottom:8px">Subtotal</th>
+                    </tr>
+                  </thead>
+                  <tbody>${itemsListHtml}</tbody>
+                </table>
+                <div style="text-align:right;font-size:1.25rem;font-weight:700;color:#1a3c8f;margin-bottom:20px">
+                  Total: ₹${Number(total || 0).toLocaleString('en-IN')}
+                </div>
+                <hr style="border:none;border-top:1px solid #eef1f6;margin-bottom:16px">
+                <p style="font-size:0.82rem;color:#888;margin:0">
+                  Any queries? Email us at <a href="mailto:karnamharish8@gmail.com">karnamharish8@gmail.com</a>
+                </p>
+              </div>
+            </div>`
+        }).catch(err => console.warn('Order confirmation email warning:', err.message));
+      } catch (e) {
+        console.warn('Email dispatch skipped:', e.message);
+      }
+    }
+
+    return res.json({ success: true, order: order || req.body });
   } catch (err) {
     console.error('❌ order create error:', err);
     res.status(500).json({ error: err.message });

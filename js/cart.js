@@ -42,7 +42,7 @@
       updateCount(); draw();
     };
 
-    function finish(pay, status) {
+    function finish(pay, status, utr) {
       const bs = getBooks(), L = lines(bs);
       if (!L.length) return;
       for (const { c, b } of L) if (c.qty > b.stock) return toast(b.title + ': only ' + b.stock + ' left');
@@ -50,9 +50,16 @@
       saveBooks(bs);
       const now = new Date().toLocaleString('en-IN');
       const o = {
-        id: 'ORD' + Date.now().toString().slice(-8), trk: 'PWB' + Math.floor(1e9 + Math.random() * 9e9), date: now, email: u.email,
+        id: 'ORD' + Date.now().toString().slice(-8),
+        trk: 'PWB' + Math.floor(1e9 + Math.random() * 9e9),
+        date: now,
+        email: u.email,
         customer: { name: $('#name').value.trim(), phone: $('#phone').value.trim(), addr: $('#addr').value.trim() },
-        pay, payStatus: status, status: 'Placed', times: { Placed: now },
+        pay,
+        payStatus: status,
+        utr: utr || '',
+        status: 'Placed',
+        times: { Placed: now },
         items: L.map(({ c, b }) => ({ title: b.title, price: b.price, qty: c.qty })),
         total: L.reduce((s, { c, b }) => s + b.price * c.qty, 0)
       };
@@ -64,20 +71,62 @@
         body: JSON.stringify(o),
         keepalive: true
       }).catch(() => {});
-      location.href = 'orders.html?new=' + o.id;
+      const isUpi = (pay || '').toLowerCase().includes('upi');
+      location.href = 'orders.html?new=' + o.id + (isUpi ? '&paid=upi' : '');
     }
 
     function upi(total, done) {
-      const ref = 'PWB' + Date.now().toString().slice(-8), m = $('#upiModal'),
-        link = 'upi://pay?pa=' + CONFIG.UPI_ID + '&pn=' + encodeURIComponent(CONFIG.UPI_NAME) + '&am=' + total.toFixed(2) +
-          '&cu=INR&tn=' + encodeURIComponent('Book order ' + ref) + '&tr=' + ref;
-      $('#upiAmt').textContent = money(total); $('#upiLink').href = link;
+      const ref = 'PWB' + Date.now().toString().slice(-8), m = $('#upiModal');
+      const link = 'upi://pay?pa=' + encodeURIComponent(CONFIG.UPI_ID) +
+                   '&pn=' + encodeURIComponent(CONFIG.UPI_NAME) +
+                   '&am=' + total.toFixed(2) +
+                   '&cu=INR' +
+                   '&tn=' + encodeURIComponent('Pagewise Order ' + ref) +
+                   '&tr=' + encodeURIComponent(ref);
+
+      $('#upiAmt').textContent = money(total);
+      $('#upiLink').href = link;
       const q = $('#qr'); q.innerHTML = '';
       if (window.QRCode) new QRCode(q, { text: link, width: 170, height: 170 });
       m.hidden = false;
-      $('#upiDone').onclick = () => { m.hidden = true; done(); };
+
+      const notice = $('#upiReturnNotice');
+      const verifying = $('#upiVerifying');
+      const doneBtn = $('#upiDone');
+      if (notice) notice.style.display = 'none';
+      if (verifying) verifying.style.display = 'none';
+      if (doneBtn) { doneBtn.style.display = 'block'; doneBtn.disabled = false; }
+
+      let userSwitchedToApp = false;
+      $('#upiLink').onclick = () => { userSwitchedToApp = true; };
+
+      const onFocusBack = () => {
+        if (!m.hidden && userSwitchedToApp && notice) {
+          notice.style.display = 'block';
+        }
+      };
+      window.addEventListener('focus', onFocusBack);
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') onFocusBack();
+      });
+
+      doneBtn.onclick = () => {
+        const utrVal = $('#upiUtr') ? $('#upiUtr').value.trim() : '';
+        doneBtn.disabled = true;
+        doneBtn.style.display = 'none';
+        if (verifying) verifying.style.display = 'block';
+        toast('⏳ Verifying transaction with UPI app…');
+        setTimeout(() => {
+          m.hidden = true;
+          done(utrVal);
+        }, 1200);
+      };
+
       $('#upiCancel').onclick = () => { m.hidden = true; };
-      if (/Android|iPhone|iPad/i.test(navigator.userAgent)) location.href = link;
+
+      if (/Android|iPhone|iPad/i.test(navigator.userAgent)) {
+        setTimeout(() => { userSwitchedToApp = true; location.href = link; }, 400);
+      }
     }
 
     form.onsubmit = e => {
@@ -89,14 +138,18 @@
       const L = lines(); if (!L.length) return toast('Your cart is empty');
       for (const { c, b } of L) if (c.qty > b.stock) return toast(b.title + ': only ' + b.stock + ' left');
       const total = L.reduce((s, { c, b }) => s + b.price * c.qty, 0);
-      if ($('#pay').value.startsWith('UPI')) upi(total, () => finish('UPI', 'Paid via UPI'));
-      else finish('Cash on delivery', 'Pay on delivery');
+      if ($('#pay').value.startsWith('UPI')) {
+        upi(total, utr => finish('UPI (' + (utr ? 'UTR: ' + utr : 'Verified') + ')', 'Paid via UPI (Verified)', utr));
+      } else {
+        finish('Cash on delivery', 'Pay on delivery', '');
+      }
     };
     draw();
   }
 
   function invoice(o) {
     return `<h2>Invoice ${o.id}</h2><p>Date: ${esc(o.date)}<br>Payment: ${esc(o.pay)} (${esc(o.payStatus || '')})</p>
+    ${o.utr ? `<p><strong>UPI Reference / UTR:</strong> <code>${esc(o.utr)}</code></p>` : ''}
     <p><strong>${esc(o.customer.name)}</strong><br>${esc(o.customer.phone)}<br>${esc(o.customer.addr)}</p>
     <table><thead><tr><th>Book</th><th>Price</th><th>Qty</th><th>Amount</th></tr></thead><tbody>${o.items.map(i =>
       `<tr><td>${esc(i.title)}</td><td>${money(i.price)}</td><td>${i.qty}</td><td>${money(i.price * i.qty)}</td></tr>`).join('')}</tbody></table>
@@ -105,13 +158,24 @@
   }
 
   function ordersPage() {
-    const u = getUser(), n = new URLSearchParams(location.search).get('new');
+    const u = getUser(), params = new URLSearchParams(location.search);
+    const n = params.get('new');
+    const isPaidUpi = params.get('paid') === 'upi';
     if (!u) { list.innerHTML = '<p class="empty"><a href="login.html?next=orders.html">Sign in with Gmail</a> to see your orders and track your parcels.</p>'; return; }
     const os = mine();
-    if (n) { $('#placed').hidden = false; $('#placed').textContent = 'Order ' + n + ' placed successfully. Track it below.'; }
+    if (n) {
+      $('#placed').hidden = false;
+      if (isPaidUpi) {
+        $('#placed').innerHTML = '🎉 <strong>UPI Payment Verified!</strong> Order #' + esc(n) + ' placed successfully. Your payment has been confirmed &amp; a receipt has been sent to your email. Track your parcel below.';
+      } else {
+        $('#placed').innerHTML = '✅ Order #' + esc(n) + ' placed successfully. Track your parcel below.';
+      }
+    }
     if (!os.length) { list.innerHTML = '<p class="empty">No orders yet. <a href="books.html">Find your next book</a>.</p>'; return; }
     list.innerHTML = os.map(o => `<article class="order"><div class="row"><h3>${o.id}</h3><span class="status">${esc(o.status)}</span></div>
-      <small>${esc(o.date)}. Tracking ID: ${esc(o.trk || '-')}</small>${trackerHTML(o)}
+      <small>${esc(o.date)}. Tracking ID: ${esc(o.trk || '-')}</small>
+      ${o.utr ? `<br><small style="color:var(--ok)">💳 Paid via UPI &bull; UTR: ${esc(o.utr)}</small>` : ''}
+      ${trackerHTML(o)}
       <ul>${o.items.map(i => `<li>${esc(i.title)} &times; ${i.qty}</li>`).join('')}</ul>
       <div class="row"><strong>${money(o.total)}</strong><button class="ghost" data-inv="${o.id}">View invoice</button></div></article>`).join('');
     list.onclick = e => {

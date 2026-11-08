@@ -68,6 +68,25 @@ function getBooks() {
     return b;
 }
 
+// ── Auto-sync books from MongoDB server to reflect admin changes in real time ──
+async function syncBooksFromServer() {
+    try {
+        const r = await fetch('/api/books');
+        if (r.ok) {
+            const serverBooks = await r.json();
+            if (Array.isArray(serverBooks) && serverBooks.length > 0) {
+                store.set('books', serverBooks);
+                window.dispatchEvent(new CustomEvent('booksupdated', { detail: serverBooks }));
+                return serverBooks;
+            }
+        }
+    } catch (e) {
+        // Fallback to cached books
+    }
+    return getBooks();
+}
+syncBooksFromServer();
+
 function saveBooks(b) {
     store.set('books', b);
     // API sync happens directly in admin.js

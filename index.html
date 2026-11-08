@@ -3,38 +3,39 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pagewise Books - India's Favourite Online Bookstore</title>
+    <title>Pagewise Books - India's Favourite Bookstore</title>
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-
-    <!-- JS fills this with <header class="bar">…</header> -->
     <div id="nav"></div>
 
     <main class="container">
-
         <!-- ── HERO BANNER ── -->
-        <section class="hero">
+        <section class="hero-banner">
             <div class="hero-content">
+                <span class="hero-badge">⚡ Special Launch Offer</span>
                 <h1>India's Favourite Online Bookstore 📚</h1>
-                <p>Discover bestsellers, classics &amp; more. Free delivery on orders above ₹499</p>
-                <a href="books.html" class="hero-cta">Shop Now →</a>
+                <p>Discover bestsellers, classics &amp; academic titles across Fiction, Tech, Self-Help &amp; History. Free express delivery on orders above ₹499.</p>
+                <div class="hero-actions">
+                    <a href="books.html" class="btn gold">Shop Now →</a>
+                    <a href="books.html?cat=Technology" class="btn-ghost-hero">Explore Tech</a>
+                </div>
             </div>
-            <div class="hero-graphic">
-                <div class="bar-chart-visual">
-                    <span class="bar-1"></span>
-                    <span class="bar-2"></span>
-                    <span class="bar-3"></span>
-                    <span class="bar-4"></span>
-                    <span class="bar-5"></span>
-                    <span class="bar-6"></span>
-                    <span class="bar-7"></span>
+            <div class="hero-graphic" aria-hidden="true">
+                <div class="spine-stack">
+                    <span class="spine s1" title="Fiction"><i>Fiction</i></span>
+                    <span class="spine s2" title="Biography"><i>Biography</i></span>
+                    <span class="spine s3" title="Tech"><i>Tech</i></span>
+                    <span class="spine s4" title="Self Help"><i>Self Help</i></span>
+                    <span class="spine s5" title="History"><i>History</i></span>
+                    <span class="spine s6" title="Children"><i>Children</i></span>
                 </div>
             </div>
         </section>
 
-        <!-- ── CATEGORY CHIPS ── -->
-        <div class="cat-row" role="list" aria-label="Browse by category">
+        <!-- ── CATEGORY PILLS ROW ── -->
+        <div class="category-strip" role="list" aria-label="Book Categories">
+            <a href="books.html"                 class="cat-chip" role="listitem">✨ All Books</a>
             <a href="books.html?cat=Fiction"     class="cat-chip" role="listitem">📖 Fiction</a>
             <a href="books.html?cat=Biography"   class="cat-chip" role="listitem">🏅 Biography</a>
             <a href="books.html?cat=Technology"  class="cat-chip" role="listitem">💻 Technology</a>
@@ -70,15 +71,14 @@
                 </div>
                 <div class="feature-card">
                     <span class="feature-icon">💳</span>
-                    <h3>Easy Payment</h3>
-                    <p>Pay with UPI, GPay, PhonePe, Paytm or cash on delivery. 100% secure.</p>
+                    <h3>Easy UPI &amp; COD</h3>
+                    <p>Pay securely via GPay, PhonePe, Paytm, QR scan, or cash on delivery.</p>
                 </div>
             </div>
         </section>
-
     </main>
 
-    <!-- Direct footer (replaces JS-injected #foot) -->
+    <!-- Direct footer -->
     <footer>
       <div class="footer-inner">
         <div class="footer-brand">
@@ -111,14 +111,16 @@
     <script src="js/data.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            const books = getBooks();
             const featuredGrid = $('#featured-grid');
-            if (featuredGrid) {
-                // Display first 4 books as featured
-                featuredGrid.innerHTML = books.slice(0, 4).map(b => cardHTML(b)).join('');
-                bindCards(featuredGrid, () => {});
-                hydrateCovers(featuredGrid);
+            function renderFeatured(books) {
+                if (featuredGrid) {
+                    featuredGrid.innerHTML = (books || []).slice(0, 4).map(b => cardHTML(b)).join('');
+                    bindCards(featuredGrid, () => {});
+                    hydrateCovers(featuredGrid);
+                }
             }
+            renderFeatured(getBooks());
+            window.addEventListener('booksupdated', e => renderFeatured(e.detail || getBooks()));
         });
     </script>
 </body>

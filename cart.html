@@ -33,7 +33,7 @@
             <label>Payment method
                 <select id="pay">
                     <option>Cash on delivery</option>
-                    <option>UPI (GPay, PhonePe, Paytm)</option>
+                    <option>UPI (GPay, PhonePe, Paytm, QR)</option>
                 </select>
             </label>
         </div>
@@ -47,14 +47,44 @@
 
     <!-- UPI Payment Modal -->
     <div class="modal" id="upiModal" role="dialog" aria-modal="true" aria-labelledby="upiT" hidden>
-        <div class="sheet">
-            <h2 id="upiT">Pay with UPI</h2>
-            <p>Amount to pay: <strong id="upiAmt"></strong></p>
-            <a class="btn gold wide" id="upiLink" href="#">Open UPI App</a>
-            <div id="qr"></div>
-            <p><small>On a phone the button opens your UPI app. On a computer, scan the QR code with any UPI app. After paying, come back and tap the button below.</small></p>
-            <button class="btn wide" id="upiDone" type="button">✔ I Have Paid</button>
-            <button class="link" id="upiCancel" type="button">Cancel</button>
+        <div class="sheet" style="max-width:440px;text-align:center;">
+            <h2 id="upiT" style="margin:0;font-size:1.4rem;color:var(--ink)">💳 Pay with UPI</h2>
+            <p style="margin:4px 0 12px;font-size:0.9rem;color:var(--muted)">Google Pay &bull; PhonePe &bull; Paytm &bull; BHIM</p>
+
+            <div style="background:#eef1f6;padding:12px;border-radius:10px;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center;">
+                <span style="font-size:0.9rem;color:#555">Amount Payable:</span>
+                <strong id="upiAmt" style="font-size:1.4rem;color:#1a3c8f"></strong>
+            </div>
+
+            <div style="background:#fff;border:2px dashed var(--line);border-radius:12px;padding:14px;margin-bottom:14px;">
+                <div id="qr" style="display:flex;justify-content:center;margin-bottom:8px"></div>
+                <small style="color:var(--muted);display:block">Scan QR code using any UPI app on your phone</small>
+            </div>
+
+            <a class="btn gold wide" id="upiLink" href="#" style="font-size:1.05rem;padding:12px;margin-bottom:10px;text-decoration:none;display:inline-block">
+                🚀 Open in UPI App (Mobile)
+            </a>
+
+            <!-- Auto-detected return message -->
+            <div id="upiReturnNotice" style="display:none;background:#e5f4ec;border:1px solid #1f7a4d;border-radius:8px;padding:10px;margin-bottom:12px;color:#1f7a4d;font-size:0.88rem;font-weight:600">
+                🟢 App detected! If your UPI payment succeeded, click Confirm below to place your order.
+            </div>
+
+            <!-- Optional UTR / Reference number field -->
+            <div style="text-align:left;margin-bottom:14px">
+                <label style="font-size:0.8rem;color:var(--muted);display:block;margin-bottom:4px">UPI Reference / 12-digit UTR (Optional):</label>
+                <input id="upiUtr" type="text" maxlength="12" placeholder="e.g. 4123XXXXXXXX" style="padding:8px 12px;font-family:monospace;font-size:0.95rem;text-align:center;letter-spacing:1px">
+            </div>
+
+            <!-- Verifying state -->
+            <div id="upiVerifying" style="display:none;padding:12px;background:#eef5ff;border-radius:8px;color:#1a3c8f;font-weight:600;margin-bottom:12px">
+                ⏳ Verifying UPI payment &amp; confirming order…
+            </div>
+
+            <button class="btn wide" id="upiDone" type="button" style="background:#1f7a4d;color:#fff;font-size:1.05rem;padding:12px">
+                ✔ Confirm Payment &amp; Place Order
+            </button>
+            <button class="link" id="upiCancel" type="button" style="margin-top:10px;font-size:0.9rem">Cancel Payment</button>
         </div>
     </div>
 </main>

@@ -22,5 +22,6 @@
     hydrateCovers(grid);
   }
   [q, cat, sort, wo].forEach(el => el.addEventListener('input', draw));
+  window.addEventListener('booksupdated', () => { draw(); });
   bindCards(grid, draw); draw();
 })();
